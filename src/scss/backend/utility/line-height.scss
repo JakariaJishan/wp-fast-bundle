@@ -1,0 +1,20 @@
+.fbnd-lh {
+	&-extra {
+		line-height: var(--fbnd-line-height-extra);
+	}
+	&-medium {
+		line-height: var(--fbnd-line-height-medium);
+	}
+	&-regular {
+		line-height: var(--fbnd-line-height-regular);
+	}
+	&-btn {
+		line-height: var(--fbnd-btn-line-height);
+	}
+	&-1 {
+		line-height: 1em;
+	}
+	&-0 {
+		line-height: 0;
+	}
+}

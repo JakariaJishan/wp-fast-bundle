@@ -1,0 +1,26 @@
+// Border radius utilities
+.fbnd-b {
+	&r {
+		&-lg {
+			border-radius: var(--fbnd-border-radius-lg);
+		}
+		&-slg {
+			border-radius: var(--fbnd-border-radius-slg);
+		}
+		&-md {
+			border-radius: var(--fbnd-border-radius-md);
+		}
+		&-smd {
+			border-radius: var(--fbnd-border-radius-smd);
+		}
+		&-sm {
+			border-radius: var(--fbnd-border-radius-sm);
+		}
+		&-round {
+			border-radius: 50%;
+		}
+		&-100 {
+			border-radius: 100px;
+		}
+	}
+}

@@ -1,0 +1,21 @@
+// Shadow utilities
+.fbnd-shadow {
+	&-primary {
+		box-shadow: 0px 2px 4px 0px var(--fbnd-color-shadow-primary);
+		&-dark {
+			box-shadow: 0px 2px 4px 0px var(--fbnd-color-shadow-primary-dark);
+		}
+	}
+	&-tertiary {
+		box-shadow: 0px 2px 4px 0px var(--fbnd-color-shadow-tertiary);
+		&-medium {
+			box-shadow: 0px 2px 4px 0px var(--fbnd-color-shadow-medium-tertiary);
+		}
+		&-deep {
+			box-shadow: 0px 2px 4px 0px var(--fbnd-color-shadow-deep-tertiary);
+		}
+	}
+	&-none {
+		box-shadow: none;
+	}
+}

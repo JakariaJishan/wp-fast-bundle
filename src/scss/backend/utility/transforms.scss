@@ -1,0 +1,9 @@
+// Transform utilities
+.fbnd-mirror {
+	&-vertical {
+		transform: scaleY(-1);
+	}
+	&-horizontal {
+		transform: scaleX(-1);
+	}
+}

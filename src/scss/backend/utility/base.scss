@@ -1,0 +1,89 @@
+// Variables
+:root {
+	--fbnd-transition-md: 0.5s;
+	--fbnd-transition-smd: 0.3s;
+	--fbnd-transition-sm: 0.2s;
+
+	--fbnd-font-weight-extra: 700;
+	--fbnd-font-weight-bold: 600;
+	--fbnd-font-weight-semi: 500;
+	--fbnd-font-weight-regular: 400;
+
+	--fbnd-border-radius-lg: 4px;
+	--fbnd-border-radius-slg: 4px;
+	--fbnd-border-radius-md: 4px;
+	--fbnd-border-radius-smd: 4px;
+	--fbnd-border-radius-sm: 2px;
+
+	--fbnd-color-primary: #86a62c;
+	--fbnd-color-secondary: #46571d;
+	--fbnd-color-tertiary: #f2ae40;
+	--fbnd-color-medium: #e8f1d0;
+	--fbnd-color-light: #fafdef;
+	--fbnd-color-dark: #1e280b;
+	--fbnd-color-dark-soft: rgb(30, 40, 11, 50%);
+
+	--fbnd-color-required: #df1c41;
+	--fbnd-color-error: #ff2424;
+	--fbnd-color-reset: #037fff;
+	--fbnd-color-active: #192217;
+	--fbnd-color-inactive: #80837f;
+
+	--fbnd-color-base-one: #ffffff;
+	--fbnd-color-base-two: #f3f5f3;
+	--fbnd-color-base-three: #d4d9d4;
+	--fbnd-color-base-three-soft: rgb(212, 217, 212, 50%);
+
+	--fbnd-color-text-dark: #0b0e04;
+	--fbnd-color-text-selection: #262a25;
+	--fbnd-color-text-medium: #3a3e39;
+	--fbnd-color-text-light: #575e55;
+	--fbnd-color-text-body: #7c807c;
+	--fbnd-color-text-reverse: #ffffff;
+
+	--fbnd-color-border-primary: #d5dad4;
+	--fbnd-color-border-secondary: #d5dad4;
+	--fbnd-color-border-light: #e2e9e2;
+
+	--fbnd-color-facebook: #375dfb;
+
+	--fbnd-color-orange-base: #f17b2c;
+	--fbnd-color-blue-light: #eff3ff;
+
+	--fbnd-color-shadow-primary: rgba(91, 95, 88, 0.078);
+	--fbnd-color-shadow-primary-dark: rgba(92, 95, 88, 0.16);
+	--fbnd-color-shadow-tertiary: rgba(0, 0, 0, 0.2);
+	--fbnd-color-shadow-medium-tertiary: rgba(0, 0, 0, 0.5);
+	--fbnd-color-shadow-deep-tertiary: rgba(0, 0, 0, 0.8);
+
+	--fbnd-line-height-extra: 1.5em;
+	--fbnd-line-height-medium: 1.43em;
+	--fbnd-line-height-regular: 1.2em;
+
+	--fbnd-font-body: "Inter", sans-serif;
+	--fbnd-font-btn: "Inter", sans-serif;
+	--fbnd-font-heading: "Inter", sans-serif;
+	--fbnd-font-body-size: 14px;
+
+	--fbnd-btn-font-size: 14px;
+	--fbnd-btn-font-weight: 500;
+	--fbnd-btn-line-height: 1.429em;
+	--fbnd-btn-vertical-padding: 10px;
+	--fbnd-btn-horizontal-padding: 20px;
+
+	--fbnd-btn-slider-width: 44px;
+	--fbnd-btn-slider-height: 24px;
+}
+
+body {
+	font-family: var(--fbnd-font-body);
+	font-size: var(--fbnd-font-body-size);
+	line-height: var(--fbnd-line-height-extra);
+	color: var(--fbnd-color-text-medium);
+	background-color: var(--fbnd-color-base-two);
+}
+
+img {
+	max-width: 100%;
+	height: auto;
+}

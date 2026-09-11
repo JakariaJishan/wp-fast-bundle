@@ -1,0 +1,147 @@
+@keyframes scaleUpDown {
+	0%,
+	100% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.05);
+	}
+}
+
+.fbnd-editor-logo-group {
+	position: relative;
+	background-color: #1e1e1e;
+	transition: background-color 0.2s ease;
+
+	.fbnd-editor-logo-front,
+	.fbnd-editor-logo-back {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		transition: opacity 0.2s ease;
+	}
+
+	.fbnd-editor-logo-front {
+		opacity: 1;
+	}
+
+	.fbnd-editor-logo-back {
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	&:hover {
+		background-color: white;
+
+		.fbnd-editor-logo-front {
+			opacity: 0;
+			pointer-events: none;
+		}
+
+		.fbnd-editor-logo-back {
+			opacity: 1;
+			pointer-events: auto;
+		}
+	}
+}
+
+.fbnd-editor-small-subheader {
+	@media (max-width: 1025px) {
+		display: flex;
+		flex-direction: column-reverse;
+		padding: 16px !important;
+		background: white;
+	}
+
+	.fbnd-editor-small-subheader-left {
+		.fbnd-btn-group {
+			@media (max-width: 1025px) {
+				width: 100%;
+				flex-wrap: nowrap;
+			}
+			.fbnd-editor-small-subheader-submit {
+				@media (max-width: 1025px) {
+					width: 100%;
+				}
+			}
+		}
+	}
+
+	.fbnd-editor-small-subheader-right {
+		@media (max-width: 1025px) {
+			flex-direction: column;
+		}
+		.fbnd-editor-small-subheader-title,
+		.fbnd-editor-small-subheader-assign {
+			@media (max-width: 1025px) {
+				width: 100%;
+			}
+		}
+	}
+}
+
+.fbnd-productlist-checkbox .components-base-control__field {
+	margin-bottom: 0;
+}
+
+.fbnd-option-desc-modal .components-modal__content {
+	padding: 4px 24px 0 24px;
+}
+
+.fbnd-newblocklist-row-actions {
+	opacity: 0;
+	transition: opacity 0.1s ease-in-out;
+}
+.fbnd-newblocklist-row:hover .fbnd-newblocklist-row-actions {
+	opacity: 1;
+}
+.fbnd-newblocklist-divider:hover .fbnd-newblocklist-divider-line,
+.fbnd-newblocklist-divider:hover .fbnd-newblocklist-divider-btn {
+	opacity: 1 !important;
+}
+
+.fbnd-newblocklist-flash-highlight {
+	box-shadow:
+		0 0 0 4px rgba(56, 88, 233, 0.35),
+		0 0 24px 8px rgba(56, 88, 233, 0.35);
+	transition: box-shadow 0.9s ease-out;
+}
+
+#wpbody-content:has(.fbnd-builder-wrap) {
+	padding-bottom: 0 !important;
+}
+
+.fbnd-builder-wrap {
+	background-color: #f0f0f0;
+}
+
+// Bordered, rounded "card" look shared by two shapes: a real PanelBody
+// (.fbnd-card-panel.components-panel__body — text effects, linked fields,
+// etc.) and a plain div standing in for one where a control needs to sit in
+// the header itself, like Print Area's checkbox (PanelBody's `title` renders
+// inside its own toggle <button>, which can't legally nest another
+// interactive control).
+.fbnd-card-panel {
+	border: 1px solid #dddddd !important;
+	border-radius: 6px;
+	margin-bottom: 8px;
+	outline: none;
+	background-color: #f9f9f9;
+
+	&:first-child {
+		border-top: 1px solid #dddddd !important;
+	}
+	.components-button.components-panel__body-toggle {
+		outline: none;
+		color: #3a3e39;
+		font-size: 11px;
+		text-transform: uppercase;
+	}
+	.components-button.components-panel__body-toggle:hover {
+		color: #3a3e39;
+	}
+	.components-panel__body-title:hover {
+		background-color: transparent;
+	}
+}

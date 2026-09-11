@@ -1,0 +1,21 @@
+.fbnd-accordion {
+	&-container {
+		overflow: hidden;
+	}
+	&-header {
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 4px;
+		position: relative;
+		z-index: 1;
+	}
+	&-icon {
+		line-height: 0;
+		transition: all var(--fbnd-transition-md);
+		&.fbnd-active {
+			transform: rotate(180deg);
+		}
+	}
+}

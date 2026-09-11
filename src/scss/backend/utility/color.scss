@@ -1,0 +1,68 @@
+// Color utilities
+.fbnd-color {
+	&-primary {
+		color: var(--fbnd-color-primary);
+	}
+	&-secondary {
+		color: var(--fbnd-color-secondary);
+	}
+	&-tertiary {
+		color: var(--fbnd-color-tertiary);
+	}
+	&-medium {
+		color: var(--fbnd-color-medium);
+	}
+	&-light {
+		color: var(--fbnd-color-light);
+	}
+	&-dark {
+		color: var(--fbnd-color-dark);
+	}
+	&-border-secondary {
+		color: var(--fbnd-color-border-secondary);
+	}
+	&-required {
+		color: var(--fbnd-color-required);
+	}
+	&-error {
+		color: var(--fbnd-color-error);
+	}
+	&-inactive {
+		color: var(--fbnd-color-inactive);
+	}
+	&-active {
+		color: var(--fbnd-color-active);
+	}
+	&-text {
+		&-dark {
+			color: var(--fbnd-color-text-dark);
+		}
+		&-medium {
+			color: var(--fbnd-color-text-medium);
+		}
+		&-light {
+			color: var(--fbnd-color-text-light);
+		}
+		&-reverse {
+			color: var(--fbnd-color-text-reverse);
+		}
+		&-body {
+			color: var(--fbnd-color-text-body);
+		}
+	}
+
+	&-facebook {
+		color: var(--fbnd-color-facebook);
+	}
+
+	&-orange {
+		&-base {
+			color: var(--fbnd-color-orange-base);
+		}
+	}
+	&-blue {
+		&-light {
+			color: var(--fbnd-color-blue-light);
+		}
+	}
+}

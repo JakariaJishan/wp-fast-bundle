@@ -1,0 +1,15 @@
+// Overflow utilities
+.fbnd-overflow {
+	&-auto {
+		overflow: auto;
+	}
+	&-hidden {
+		overflow: hidden;
+	}
+	&-visible {
+		overflow: visible;
+	}
+	&-scroll {
+		overflow: scroll;
+	}
+}

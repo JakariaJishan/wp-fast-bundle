@@ -1,0 +1,30 @@
+.fbnd-item {
+	&-center {
+		align-items: center;
+	}
+	&-stretch {
+		align-items: stretch;
+	}
+	&-end {
+		align-items: end;
+	}
+	&-start {
+		align-items: start;
+	}
+}
+@media (max-width: 1024px) {
+	.fbnd-mlg-item {
+		&-center {
+			align-items: center;
+		}
+		&-stretch {
+			align-items: stretch;
+		}
+		&-end {
+			align-items: end;
+		}
+		&-start {
+			align-items: start;
+		}
+	}
+}

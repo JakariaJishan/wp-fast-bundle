@@ -1,0 +1,50 @@
+// Border color utilities
+.fbnd-b {
+	&c {
+		&-border {
+			&-primary {
+				border-color: var(--fbnd-color-border-primary);
+			}
+			&-secondary {
+				border-color: var(--fbnd-color-border-secondary);
+			}
+			&-light {
+				border-color: var(--fbnd-color-border-light);
+			}
+		}
+		&-base {
+			&1 {
+				border-color: var(--fbnd-color-base-one);
+			}
+			&2 {
+				border-color: var(--fbnd-color-base-two);
+			}
+			&3 {
+				border-color: var(--fbnd-color-base-three);
+			}
+		}
+		&-text {
+			&-dark {
+				border-color: var(--fbnd-color-text-dark);
+			}
+			&-medium {
+				border-color: var(--fbnd-color-text-medium);
+			}
+			&-light {
+				border-color: var(--fbnd-color-text-light);
+			}
+			&-reverse {
+				border-color: var(--fbnd-color-text-reverse);
+			}
+			&-body {
+				border-color: var(--fbnd-color-text-body);
+			}
+		}
+		&-currentColor {
+			border-color: currentColor;
+		}
+		&-transparent {
+			border-color: transparent;
+		}
+	}
+}

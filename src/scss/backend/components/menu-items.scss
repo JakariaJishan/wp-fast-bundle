@@ -1,0 +1,25 @@
+
+a.fbnd-menu-item {
+	padding: 25px 0px !important;
+	color: var(--fbnd-color-text-dark);
+	text-decoration: none;
+	font-size: 14px;
+	font-weight: var(--fbnd-font-weight-semi);
+	border-bottom: 2px solid transparent;
+	white-space: nowrap;
+	&:hover,
+	&:focus,
+	&.fbnd-active {
+		color: var(--fbnd-color-primary);
+		outline: none;
+		box-shadow: none;
+	}
+	&.fbnd-active {
+		border-color: currentColor;
+	}
+}
+
+.fbnd-submenu {
+	padding-top: 16px !important;
+	padding-bottom: 16px !important;
+}

@@ -1,0 +1,23 @@
+// Selection utilities
+.fbnd-select {
+	&-none {
+		user-select: none;
+	}
+	&-text {
+		user-select: text;
+	}
+	&-all {
+		user-select: all;
+	}
+}
+.fbnd-selection {
+	&-none {
+		user-select: none;
+	}
+	&-text {
+		user-select: text;
+	}
+	&-all {
+		user-select: all;
+	}
+}

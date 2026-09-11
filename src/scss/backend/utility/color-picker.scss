@@ -1,0 +1,71 @@
+// Color picker component styles
+.fbnd-color {
+	&-trigger {
+		// border-radius: 50%;
+		border: 1px solid var(--fbnd-color-border-primary);
+		width: 20px;
+		height: 20px;
+		overflow: hidden;
+		cursor: pointer;
+	}
+	&-main-square {
+		width: 136px;
+		height: 136px;
+	}
+	&-selector {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		position: absolute;
+		pointer-events: none;
+		transform: translate(-50%, -50%);
+		border: 2px solid var(--fbnd-color-base-one);
+	}
+	&-slider {
+		width: 8px;
+		height: 136px;
+		border-radius: var(--fbnd-border-radius-sm);
+		background-image: url("data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCACIAAgDASIAAhEBAxEB/8QAGAABAQEBAQAAAAAAAAAAAAAAAAIDAQf/xAAsEAACAAQEBQQBBQAAAAAAAAABAgADEUEEEjEyExQhUWEiQmKh0SM0keHw/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/APUL9Z4c2xVOifH/AHeEM3TicDJblKb/AJU/q0IDvvA44c0/dWT49vu8IkUyECSUSvXDGuZ/kL0/EICszFwzTVaaOgxIpkT4m1fzCJHDyUWWy4evqkHex7i9NL2hAUeKHAeYrYr2ThtVex862vCOAJlKrKdZB3SDvY9xemn8QgO/q5wGmK2J9s4bFXsfOtrwiVMoymeWjDCVo8o7i3ceNL2hAWVm8wqTGU4wrVHG0L2P3aEZqZPKsyBuUzetTvzdNPGkIDVjNGKXOEOLp6ANmXzeusIzUSeWZUYnCFvWx3BvH1CA0bi82ufLzeX0U2ZeuvnWEZjhcu2RnOFr63O8N48aQgLJnGeruqjF0oksbSvc/d4QhAf/2Q==");
+		.fbnd-color-selector {
+			width: 100%;
+			height: 4px;
+			border-radius: 0;
+			box-sizing: border-box;
+			transform: translateY(-50%);
+			background-color: var(--fbnd-color-base-one);
+			border: 1px solid var(--fbnd-color-border-primary);
+			box-shadow: 0 0 4px -1px var(--fbnd-color-shadow-deep-tertiary);
+		}
+	}
+	&-bar {
+		border-radius: 100px;
+	}
+	&-info {
+		min-width: 106px;
+		padding: 4px !important;
+		background-color: var(--fbnd-color-base-two);
+		border-radius: var(--fbnd-border-radius-smd);
+	}
+	&-selected {
+		width: 20px;
+		height: 20px;
+		&-wrapper {
+			overflow: hidden;
+			border-radius: var(--fbnd-border-radius-sm);
+			border: 1px solid var(--fbnd-color-border-primary);
+		}
+	}
+	&-tab-item {
+		font-size: 12px;
+		line-height: 1.33em;
+		color: var(--fbnd-color-text-dark);
+		padding: 6px 0 4px !important;
+		margin-bottom: -1px !important;
+		border-bottom: 2px solid transparent;
+		cursor: pointer;
+		&.fbnd-active {
+			cursor: default;
+			border-bottom: 2px solid var(--fbnd-color-active);
+		}
+	}
+}

@@ -1,0 +1,36 @@
+{
+	"name": "fast-bundle",
+	"version": "1.0.0",
+	"license": "GPL-3.0-only",
+	"main": "src/index.js",
+	"prettier": "@wordpress/prettier-config",
+	"scripts": {
+		"dev": "npm run start",
+		"start": "wp-scripts start --config ./webpack.config.js",
+		"build-all": "npm run build-cross",
+		"build-release": "npm run build-cross",
+		"build": "npm run build-cross && npm run make-pot && gulp package && explorer .\\build\\",
+		"build-dev": "npm run build-cross && gulp package && explorer .\\build\\",
+		"build-cross": "wp-scripts build --config ./webpack.config.js",
+		"make-pot": "php -d memory_limit=-1 wp-cli.phar i18n make-pot . languages/fast-bundle.pot --exclude=src,build,node_modules",
+		"format": "npx prettier ./src --write",
+		"lint": "npx eslint ./src --fix",
+		"update": "npx npm-check-updates -i --format group"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.29.0",
+		"@wordpress/babel-preset-default": "^8.41.0",
+		"@wordpress/eslint-plugin": "^24.3.0",
+		"@wordpress/prettier-config": "^4.41.0",
+		"@wordpress/scripts": "^31.6.0",
+		"eslint": "^8.56.0",
+		"eslint-plugin-react": "^7.37.5",
+		"gulp": "^5.0.1",
+		"gulp-zip": "^6.1.0",
+		"prettier": "npm:wp-prettier@^3.0.3"
+	},
+	"dependencies": {
+		"@wordpress/dataviews": "^11.3.0",
+		"recharts": "^3.7.0"
+	}
+}

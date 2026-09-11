@@ -1,0 +1,13 @@
+/* Confirm Modal Overlay */
+.toplevel_page_fbnd-dashboard #wpbody {
+	background-color: var(--fbnd-color-base-two);
+}
+.fbnd-builder-wrapper {
+	transition:
+		background-color 0.3s ease-in-out,
+		box-shadow 0.3s ease-in-out;
+	&.fbnd-formula-suggestion-highlight {
+		background-color: #fafdef;
+		box-shadow: 0 0 0 2px #96b247;
+	}
+}

@@ -1,0 +1,4 @@
+== Changelog ==
+
+= 1.0.0 =
+* Initial scaffold, forked from the WowAddons Product Addons boilerplate.

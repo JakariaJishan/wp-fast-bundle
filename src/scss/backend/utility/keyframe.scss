@@ -1,0 +1,118 @@
+/* Keyframe */
+@keyframes slideToLeft {
+	0% {
+		transform: translateX(0);
+	}
+	100% {
+		transform: translateX(100%);
+	}
+}
+@keyframes slideIn {
+	from {
+		transform: translateX(120%);
+		opacity: 0;
+	}
+	to {
+		transform: translateX(0);
+		opacity: 1;
+	}
+}
+@keyframes slideUp {
+	from {
+		transform: translateY(20px);
+		opacity: 0;
+	}
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+@keyframes iconMovingLeft {
+	0% {
+		transform: translateX(0px);
+	}
+	100% {
+		transform: translateX(2px);
+	}
+}
+@keyframes iconMovingRight {
+	0% {
+		transform: translateX(0px);
+	}
+	100% {
+		transform: translateX(2px);
+	}
+}
+@keyframes slideLeft {
+	0% {
+		transform: translateX(100%);
+	}
+	100% {
+		transform: translateX(2px);
+	}
+}
+@keyframes fade-in-message {
+	from {
+		right: 0;
+		opacity: 0;
+	}
+	to {
+		right: 65px;
+		opacity: 1;
+	}
+}
+@keyframes stroke-message {
+	100% {
+		stroke-dashoffset: 0;
+	}
+}
+@keyframes scale-message {
+	0%,
+	100% {
+		transform: none;
+	}
+	50% {
+		transform: scale3d(1.1, 1.1, 1);
+	}
+}
+@keyframes fill-message {
+	100% {
+		box-shadow: inset 0px 0px 0px 30px var(--fbnd-color-primary);
+	}
+}
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+@keyframes scaleIn {
+	from {
+		transform: scale(0.9);
+	}
+	to {
+		transform: scale(1);
+	}
+}
+@keyframes fbnd-loading-skeleton {
+	100% {
+		transform: translateX(100%);
+	}
+}
+@keyframes fbnd-pulse {
+	50% {
+		opacity: 0.5;
+	}
+}
+@keyframes fbnd-rotate {
+	100% {
+		transform: rotate(1turn);
+	}
+}
+@keyframes fbndSpinnerAnimation {
+	to {
+		transform: rotate(1turn);
+	}
+}

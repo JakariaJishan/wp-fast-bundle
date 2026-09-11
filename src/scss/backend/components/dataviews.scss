@@ -1,0 +1,134 @@
+@import "@wordpress/dataviews/build-style/style.css";
+
+@mixin fbnd-square-checkbox() {
+	width: 18px;
+	height: 18px;
+	border-radius: 2px !important;
+	-webkit-appearance: auto !important;
+	appearance: auto !important;
+	vertical-align: middle;
+	margin: 0;
+	min-height: 0 !important;
+}
+
+@mixin fbnd-dataviews-common() {
+	.dataviews-view-table-selection-checkbox input[type="checkbox"],
+	.components-checkbox-control__input {
+		@include fbnd-square-checkbox();
+	}
+
+	.dataviews-view-table
+		col[class^="dataviews-view-table__col-"]:not(
+			.dataviews-view-table__col-first-data
+		) {
+		width: auto;
+	}
+
+	.dataviews-filters__container-visibility-toggle {
+		display: none;
+	}
+
+	.dataviews__view-actions,
+	.dataviews-filters__container {
+		.components-button.is-compact.has-icon:not(.has-text) {
+			height: 36px;
+		}
+	}
+
+	.components-dropdown,     /* gear icon */
+	[aria-label="View options"] {
+		order: 99;
+	}
+
+	.dataviews-view-table tbody td {
+		vertical-align: middle;
+	}
+
+	.components-base-control__field {
+		margin-bottom: 0;
+		.components-input-base {
+			height: 36px;
+		}
+	}
+
+	.components-base-control.components-toggle-control {
+		margin-bottom: 0;
+	}
+}
+
+.fbnd-dataviews,
+.fbnd-analytics-dataviews {
+	@include fbnd-dataviews-common();
+}
+
+.fbnd-dataviews {
+	.dataviews-view-table thead tr {
+		border-top: 1px solid #f0f0f0;
+	}
+	.dataviews-item-actions {
+		.fbnd-dataview-action__text {
+			display: none;
+		}
+	}
+	.dataviews-view-table {
+		col[class^="dataviews-view-table__col-"] {
+			width: 1% !important;
+		}
+
+		col.dataviews-view-table__col-title {
+			width: 100% !important;
+		}
+
+		.dataviews-view-table__cell-content-wrapper:not(
+				.dataviews-column-primary__media
+			) {
+			min-width: unset;
+			max-width: unset;
+		}
+		td,
+		th {
+			white-space: nowrap;
+		}
+	}
+
+	.dataviews-view-table tbody tr {
+		td.dataviews-view-table__checkbox-column + td + td {
+			max-width: 0;
+			white-space: normal;
+
+			.components-button {
+				display: block;
+				width: 100%;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+		}
+	}
+
+	.dataviews-no-results {
+		min-height: 400px;
+	}
+	.dataviews-wrapper:has(.dataviews-no-results) {
+		.dataviews-view-table {
+			display: none;
+		}
+	}
+}
+
+.fbnd-import-modal {
+	.components-checkbox-control__input {
+		@include fbnd-square-checkbox();
+	}
+}
+
+.fbnd-analytics-dataviews {
+	.dataviews-wrapper .dataviews__view-actions {
+		display: none;
+	}
+
+	.dataviews-view-table tr td:first-child,
+	.dataviews-view-table tr th:first-child {
+		padding-left: 40px;
+	}
+}

@@ -1,0 +1,23 @@
+.components-dropdown-menu__menu {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	.components-dropdown-menu__menu-item {
+		justify-content: center;
+		padding: 8px 16px;
+		height: auto;
+		&.is-active {
+			background-color: rgba(var(--wp-admin-theme-color--rgb), 0.1);
+		}
+	}
+}
+
+.upgrade-pro-button {
+	background: rgba(243, 117, 0, 0.078) !important;
+	box-shadow:
+		inset 0 0 0 1px #f37500,
+		0 0 0 currentColor !important;
+	color: #f37500 !important;
+	transition: background 0.1s ease-in-out !important;
+	border: none;
+}
