@@ -325,6 +325,7 @@ class RequestApi {
 			'id'      => $post->ID,
 			'title'   => $post->post_title,
 			'status'  => $post->post_status,
+			'type'    => get_post_meta( $id, 'fbnd_option_type', true ) ?: 'custom',
 			'content' => get_post_meta( $id, 'fbnd_addons_blocks', true ),
 			// Live Personalizer "Preview settings" — bundled here rather than a
 			// separate REST round trip, same reasoning as `content` above.
@@ -403,6 +404,7 @@ class RequestApi {
 		$id              = isset( $params['id'] ) ? sanitize_text_field( $params['id'] ) : '';
 		$title           = isset( $params['title'] ) ? sanitize_text_field( $params['title'] ) : 'Untitled';
 		$status          = isset( $params['status'] ) ? sanitize_text_field( $params['status'] ) : 'draft';
+		$option_type     = isset( $params['option_type'] ) ? sanitize_text_field( $params['option_type'] ) : 'custom';
 		$content         = isset( $params['content'] ) && is_array( $params['content'] ) ? fast_bundle()->sanitize_rest_params( $params['content'] ) : '';
 		$required_fields = isset( $params['required_fields'] ) && is_array( $params['required_fields'] ) ? fast_bundle()->sanitize_rest_params( $params['required_fields'] ) : '';
 		$css             = isset( $params['css'] ) ? fast_bundle()->sanitize_rest_params( $params['css'] ) : '';
@@ -442,6 +444,7 @@ class RequestApi {
 
 			update_option( 'fbnd_first_option_created', 'yes' );
 			update_post_meta( $id, 'fbnd_addons_blocks', $content );
+			update_post_meta( $id, 'fbnd_option_type', $option_type );
 			$required_options = $required_fields ? $required_fields : array();
 			update_post_meta( $id, 'fbnd_required_options', $required_options );
 			if ( $css ) {
@@ -476,6 +479,7 @@ class RequestApi {
 			}
 
 			update_post_meta( $id, 'fbnd_addons_blocks', $content );
+			update_post_meta( $id, 'fbnd_option_type', $option_type );
 			$required_options = $required_fields ? $required_fields : array();
 			update_post_meta( $id, 'fbnd_required_options', $required_options );
 			do_action( 'fbnd_handle_cache_on_save' );
@@ -832,11 +836,16 @@ class RequestApi {
 				$id                = get_the_ID();
 				$blocks            = get_post_meta( $id, 'fbnd_addons_blocks', true );
 				$all_blocks[ $id ] = $blocks;
+				$option_type       = get_post_meta( $id, 'fbnd_option_type', true ) ?: 'custom';
+				$options_count     = 'fixed_bundle' === $option_type
+					? count( is_array( $blocks ) && isset( $blocks['items'] ) && is_array( $blocks['items'] ) ? $blocks['items'] : array() )
+					: ( is_string( $blocks ) ? substr_count( $blocks, 'blockid' ) : substr_count( wp_json_encode( $blocks ), 'blockid' ) );
 				$data[]            = array(
 					'id'       => $id,
 					'title'    => get_the_title(),
 					'status'   => get_post_status() === 'publish',
-					'options'  => is_string( $blocks ) ? substr_count( $blocks, 'blockid' ) : substr_count( wp_json_encode( $blocks ), 'blockid' ),
+					'type'     => $option_type,
+					'options'  => $options_count,
 					'assigned' => fast_bundle()->get_assigned_product_data( $id ),
 				);
 			}

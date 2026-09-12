@@ -112,12 +112,20 @@ defaultConfig = {
 			__dirname,
 			'src/frontend_script/index.js'
 		),
+		'fixed-bundle': path.resolve(
+			__dirname,
+			'src/frontend_script/fixed-bundle.js'
+		),
 		'fbnd-admin': path.resolve( __dirname, 'src/menu/fbnd-admin.js' ),
 
 		// CSS-only entrypoints (replaces gulp SCSS build)
 		'fastbundle-frontend': path.resolve(
 			__dirname,
 			'src/scss/frontend.scss'
+		),
+		'fastbundle-fixed-bundle': path.resolve(
+			__dirname,
+			'src/scss/fixed-bundle.scss'
 		),
 	},
 	output: {

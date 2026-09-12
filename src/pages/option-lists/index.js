@@ -14,6 +14,7 @@ import { updateOptionBlockIds } from '@/utils/utils';
 import { DataViews } from '@wordpress/dataviews';
 import { __ } from '@wordpress/i18n';
 
+import CreateFixedBundleButton from '@/components/create-fixed-bundle-button';
 import CreateOptionDropdown from '@/components/create-option-dropdown';
 import TutorialModal from '@/components/tutorial-modal';
 import {
@@ -79,7 +80,7 @@ const storeViewPrefs = ( view ) => {
 	}
 };
 
-const OptionList = ( { setOptionId, setIsListing } ) => {
+const OptionList = ( { setOptionId, setIsListing, setIsBundle } ) => {
 	const [ optionList, setOptionList ] = useState( [] );
 	const [ optionListBlocks, setOptionListBlocks ] = useState( {} );
 	const [ totalNav, setTotalNav ] = useState( 0 );
@@ -362,16 +363,18 @@ const OptionList = ( { setOptionId, setIsListing } ) => {
 				id: 'id',
 				type: 'integer',
 				render: ( { item } ) => {
+					const isBundle = item.type === 'fixed_bundle';
 					return (
 						<Button
 							__next40pxDefaultSize
 							variant="link"
 							onClick={ () => {
 								const url = new URL( window.location.href );
-								const newHash = `#lists/${ item.id }`;
+								const newHash = `#${ isBundle ? 'bundle' : 'lists' }/${ item.id }`;
 								const newUrl = `${ url.pathname }${ url.search }${ newHash }`;
 								window.history.pushState( {}, '', newUrl );
 								setOptionId( item.id );
+								setIsBundle?.( isBundle );
 								setIsListing( false );
 							} }
 						>
@@ -388,25 +391,51 @@ const OptionList = ( { setOptionId, setIsListing } ) => {
 				enableSorting: false,
 				enableHiding: false,
 				render: ( { item } ) => {
+					const isBundle = item.type === 'fixed_bundle';
 					return (
-						<Button
-							variant="link"
-							title={ item.title }
-							href={ `${ window.location.pathname }${ window.location.search }#lists/${ item.id }` }
-							style={ {
-								overflow: 'hidden',
-								textOverflow: 'ellipsis',
-								whiteSpace: 'nowrap',
-								display: 'block',
-								width: 'fit-content',
-							} }
-						>
-							<span
-								dangerouslySetInnerHTML={ {
-									__html: item.title,
+						<HStack spacing={ 2 } justify="start" alignment="center">
+							<Button
+								variant="link"
+								title={ item.title }
+								onClick={ () => {
+									const url = new URL( window.location.href );
+									const newHash = `#${ isBundle ? 'bundle' : 'lists' }/${ item.id }`;
+									const newUrl = `${ url.pathname }${ url.search }${ newHash }`;
+									window.history.pushState( {}, '', newUrl );
+									setOptionId( item.id );
+									setIsBundle?.( isBundle );
+									setIsListing( false );
 								} }
-							/>
-						</Button>
+								style={ {
+									overflow: 'hidden',
+									textOverflow: 'ellipsis',
+									whiteSpace: 'nowrap',
+									display: 'block',
+									width: 'fit-content',
+								} }
+							>
+								<span
+									dangerouslySetInnerHTML={ {
+										__html: item.title,
+									} }
+								/>
+							</Button>
+							{ isBundle && (
+								<span
+									style={ {
+										fontSize: 11,
+										fontWeight: 600,
+										padding: '2px 6px',
+										borderRadius: 3,
+										background: 'var(--fbnd-color-medium, #e8f1d0)',
+										color: 'var(--fbnd-color-secondary, #46571d)',
+										flexShrink: 0,
+									} }
+								>
+									{ __( 'Fixed Bundle', 'fast-bundle' ) }
+								</span>
+							) }
+						</HStack>
 					);
 				},
 			},
@@ -450,11 +479,13 @@ const OptionList = ( { setOptionId, setIsListing } ) => {
 				enableSorting: false,
 				enableHiding: false,
 				render: ( { item } ) => {
-					return `${ item.options } Options`;
+					return item.type === 'fixed_bundle'
+						? `${ item.options } Products`
+						: `${ item.options } Options`;
 				},
 			},
 		],
-		[ setOptionId, setIsListing, updateOption ]
+		[ setOptionId, setIsListing, setIsBundle, updateOption ]
 	);
 
 	const processedData = useMemo( () => {
@@ -790,6 +821,10 @@ const OptionList = ( { setOptionId, setIsListing } ) => {
 								buttonVariant="primary"
 								buttonSize=""
 							/>
+							<CreateFixedBundleButton
+								buttonVariant="secondary"
+								buttonSize=""
+							/>
 						</HStack>
 					</HStack>
 				) }
@@ -810,6 +845,10 @@ const OptionList = ( { setOptionId, setIsListing } ) => {
 							<HStack alignment={ 'center' }>
 								<CreateOptionDropdown
 									buttonVariant="primary"
+									buttonSize=""
+								/>
+								<CreateFixedBundleButton
+									buttonVariant="secondary"
 									buttonSize=""
 								/>
 							</HStack>

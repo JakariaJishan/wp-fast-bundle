@@ -2,6 +2,7 @@ import { createRoot, useEffect, useRef, useState } from '@wordpress/element';
 import Header from './components/header';
 import Analytics from './pages/analytics';
 import Editor from './pages/editor';
+import FixedBundleEditor from './pages/fixed-bundle';
 import { License } from './pages/license';
 import OptionList from './pages/option-lists';
 import { OurProduct } from './pages/our-products';
@@ -20,14 +21,29 @@ const useFreshInstallMenuClass = ( isFreshInstall ) => {
 	}, [ isFreshInstall ] );
 };
 
+/**
+ * Which of the '#lists/{id}' / '#bundle/{id}' hash families the current URL
+ * is in, if any.
+ *
+ * @param {string} hash `window.location.hash`.
+ * @return {'lists'|'bundle'|''} The matching prefix, or '' when neither.
+ */
+const getHashPrefix = ( hash ) => {
+	if ( hash.includes( '#bundle/' ) ) {
+		return 'bundle';
+	}
+	if ( hash.includes( '#lists/' ) ) {
+		return 'lists';
+	}
+	return '';
+};
+
 const Dashboard = () => {
 	const pageHash = window.location.hash;
-	const [ isListing, setIsListing ] = useState(
-		pageHash.includes( '#lists/' ) ? false : true
-	);
-	const pageOptionid = pageHash.includes( '#lists/' )
-		? pageHash?.split( '/' )[ 1 ]
-		: '';
+	const initialPrefix = getHashPrefix( pageHash );
+	const [ isListing, setIsListing ] = useState( ! initialPrefix );
+	const [ isBundle, setIsBundle ] = useState( initialPrefix === 'bundle' );
+	const pageOptionid = initialPrefix ? pageHash?.split( '/' )[ 1 ] : '';
 	const [ optionId, setOptionId ] = useState( pageOptionid );
 
 	useEffect( () => {
@@ -35,14 +51,15 @@ const Dashboard = () => {
 		const splited = hash?.split( '/' );
 		if ( hash && splited.length > 1 ) {
 			setOptionId( splited[ 1 ] );
+			setIsBundle( getHashPrefix( hash ) === 'bundle' );
 			setIsListing( false );
 		}
 	}, [] );
 
-	const stateRef = useRef( { isListing, optionId } );
+	const stateRef = useRef( { isListing, optionId, isBundle } );
 	useEffect( () => {
-		stateRef.current = { isListing, optionId };
-	}, [ isListing, optionId ] );
+		stateRef.current = { isListing, optionId, isBundle };
+	}, [ isListing, optionId, isBundle ] );
 
 	useEffect( () => {
 		const abortControl = new AbortController();
@@ -55,6 +72,7 @@ const Dashboard = () => {
 			if ( stateRef.current.isListing ) {
 				if ( newOptionId ) {
 					setOptionId( newOptionId );
+					setIsBundle( getHashPrefix( hash ) === 'bundle' );
 					setIsListing( false );
 				}
 			} else if ( ! stateRef.current.isListing && ! newOptionId ) {
@@ -82,6 +100,13 @@ const Dashboard = () => {
 					<OptionList
 						setIsListing={ setIsListing }
 						setOptionId={ setOptionId }
+						setIsBundle={ setIsBundle }
+					/>
+				) : isBundle ? (
+					<FixedBundleEditor
+						bundleId={ optionId }
+						setBundleId={ setOptionId }
+						setIsListing={ setIsListing }
 					/>
 				) : (
 					<Editor
@@ -127,8 +152,12 @@ const useRouteRenderer = ( currentNav, isFreshInstall ) => {
 		return { component: Dashboard, showHeader: false };
 	}
 
-	// Handle special case for lists route
-	if ( currentNav === 'lists' || currentNav.includes( 'lists' ) ) {
+	// Handle special case for the lists/bundle routes
+	if (
+		currentNav === 'lists' ||
+		currentNav.includes( 'lists' ) ||
+		currentNav.includes( 'bundle' )
+	) {
 		return { component: Dashboard, showHeader: false };
 	}
 

@@ -111,7 +111,10 @@ const useNavStore = createStore( ( set ) => ( {
 // rather than one per mounted component.
 window.addEventListener( 'fbndlocationchange', () => {
 	let hash = window.location.hash;
-	hash = hash.includes( '#lists/' ) ? hash.split( '/' )[ 0 ] : hash;
+	hash =
+		hash.includes( '#lists/' ) || hash.includes( '#bundle/' )
+			? hash.split( '/' )[ 0 ]
+			: hash;
 	useNavStore.getState().setCurrentNav( hash.replace( '#', '' ) );
 } );
 

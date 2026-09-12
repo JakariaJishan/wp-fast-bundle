@@ -12,6 +12,7 @@ use FBND\Includes\Admin\Options;
 use FBND\Includes\Admin\OurPlugins;
 use FBND\Includes\Common\Hooks;
 use FBND\Includes\Order\CheckoutPage;
+use FBND\Includes\Order\Fixed_Bundle_Cart;
 use FBND\Includes\Restapi\RequestApi;
 
 use FBND\Includes\Cron\Cleanup;
@@ -53,6 +54,7 @@ class Initialization {
 		new OurPlugins();
 
 		new CheckoutPage();
+		new Fixed_Bundle_Cart();
 
 		new Hooks();
 		new RequestApi();
