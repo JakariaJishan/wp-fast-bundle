@@ -19,11 +19,21 @@ export const OFFER_TYPES = {
 		prefix: 'bundle',
 		label: __( 'Fixed Bundle', 'fast-bundle' ),
 		createLabel: __( 'Create Fixed Bundle', 'fast-bundle' ),
+		description: __(
+			'Sell a fixed set of products together at a discount.',
+			'fast-bundle'
+		),
+		icon: 'fixed-bundle.svg',
 	},
 	buy_x_get_y: {
 		prefix: 'bxgy',
 		label: __( 'Buy X Get Y', 'fast-bundle' ),
 		createLabel: __( 'Create Buy X Get Y', 'fast-bundle' ),
+		description: __(
+			'Buy qualifying products, get free or discounted reward products.',
+			'fast-bundle'
+		),
+		icon: 'bxgy.svg',
 	},
 };
 

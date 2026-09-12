@@ -14,8 +14,8 @@ import { updateOptionBlockIds } from '@/utils/utils';
 import { DataViews } from '@wordpress/dataviews';
 import { __ } from '@wordpress/i18n';
 
-import CreateOfferButton from '@/components/create-offer-button';
-import { getOfferHashPrefix, getOfferLabel, OFFER_TYPES } from '@/utils/offer-types';
+import CreateOfferModal from '@/components/create-offer-modal';
+import { getOfferHashPrefix, getOfferLabel } from '@/utils/offer-types';
 import {
 	Button,
 	Card,
@@ -808,15 +808,7 @@ const OptionList = ( { setOptionId, setIsListing, setOfferType } ) => {
 							) }
 						</Text>
 						<HStack justify="center">
-							
-							{ Object.keys( OFFER_TYPES ).map( ( type ) => (
-								<CreateOfferButton
-									key={ type }
-									type={ type }
-									buttonVariant="secondary"
-									buttonSize=""
-								/>
-							) ) }
+							<CreateOfferModal buttonVariant="primary" buttonSize="" />
 						</HStack>
 					</HStack>
 				) }
@@ -834,14 +826,7 @@ const OptionList = ( { setOptionId, setIsListing, setOfferType } ) => {
 						} }
 						header={
 							<HStack alignment={ 'center' }>
-								{ Object.keys( OFFER_TYPES ).map( ( type ) => (
-									<CreateOfferButton
-										key={ type }
-										type={ type }
-										buttonVariant="secondary"
-										buttonSize=""
-									/>
-								) ) }
+								<CreateOfferModal buttonVariant="primary" buttonSize="" />
 							</HStack>
 						}
 						view={ view }

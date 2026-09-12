@@ -1,6 +1,5 @@
-import CreateOfferButton from '@/components/create-offer-button';
+import CreateOfferModal from '@/components/create-offer-modal';
 import useNavStore from '@/store/nav/useNavStore';
-import { OFFER_TYPES } from '@/utils/offer-types';
 import icons from '@/utils/icons';
 import {
 	Button,
@@ -260,20 +259,16 @@ const Header = () => {
 								spacing={ isXLarge ? 4 : 2 }
 								style={ { padding: '16px 0px' } }
 							>
-								{ Object.keys( OFFER_TYPES ).map( ( type ) => (
-									<CreateOfferButton
-										key={ type }
-										type={ type }
-										buttonVariant="primary"
-										size={
-											isXLarge
-												? 'default'
-												: isMobile
-												? 'small'
-												: 'compact'
-										}
-									/>
-								) ) }
+								<CreateOfferModal
+									buttonVariant="primary"
+									size={
+										isXLarge
+											? 'default'
+											: isMobile
+											? 'small'
+											: 'compact'
+									}
+								/>
 
 								{ ! isTab && (
 									<HStack alignment="left" ref={ menuRef }>
