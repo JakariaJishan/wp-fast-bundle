@@ -11,8 +11,10 @@ use FBND\Includes\Admin\Notice;
 use FBND\Includes\Admin\Options;
 use FBND\Includes\Admin\OurPlugins;
 use FBND\Includes\Common\Hooks;
+use FBND\Includes\Order\Buy_X_Get_Y_Cart;
 use FBND\Includes\Order\CheckoutPage;
 use FBND\Includes\Order\Fixed_Bundle_Cart;
+use FBND\Includes\Order\Grouped_Offer_Cart;
 use FBND\Includes\Restapi\RequestApi;
 
 use FBND\Includes\Cron\Cleanup;
@@ -54,7 +56,10 @@ class Initialization {
 		new OurPlugins();
 
 		new CheckoutPage();
-		new Fixed_Bundle_Cart();
+
+		$grouped_offer_cart = new Grouped_Offer_Cart();
+		new Fixed_Bundle_Cart( $grouped_offer_cart );
+		new Buy_X_Get_Y_Cart( $grouped_offer_cart );
 
 		new Hooks();
 		new RequestApi();

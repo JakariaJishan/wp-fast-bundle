@@ -14,8 +14,9 @@ import { updateOptionBlockIds } from '@/utils/utils';
 import { DataViews } from '@wordpress/dataviews';
 import { __ } from '@wordpress/i18n';
 
-import CreateFixedBundleButton from '@/components/create-fixed-bundle-button';
+import CreateOfferButton from '@/components/create-offer-button';
 import CreateOptionDropdown from '@/components/create-option-dropdown';
+import { getOfferHashPrefix, getOfferLabel, OFFER_TYPES } from '@/utils/offer-types';
 import TutorialModal from '@/components/tutorial-modal';
 import {
 	Button,
@@ -80,7 +81,7 @@ const storeViewPrefs = ( view ) => {
 	}
 };
 
-const OptionList = ( { setOptionId, setIsListing, setIsBundle } ) => {
+const OptionList = ( { setOptionId, setIsListing, setOfferType } ) => {
 	const [ optionList, setOptionList ] = useState( [] );
 	const [ optionListBlocks, setOptionListBlocks ] = useState( {} );
 	const [ totalNav, setTotalNav ] = useState( 0 );
@@ -363,18 +364,17 @@ const OptionList = ( { setOptionId, setIsListing, setIsBundle } ) => {
 				id: 'id',
 				type: 'integer',
 				render: ( { item } ) => {
-					const isBundle = item.type === 'fixed_bundle';
 					return (
 						<Button
 							__next40pxDefaultSize
 							variant="link"
 							onClick={ () => {
 								const url = new URL( window.location.href );
-								const newHash = `#${ isBundle ? 'bundle' : 'lists' }/${ item.id }`;
+								const newHash = `#${ getOfferHashPrefix( item.type ) }/${ item.id }`;
 								const newUrl = `${ url.pathname }${ url.search }${ newHash }`;
 								window.history.pushState( {}, '', newUrl );
 								setOptionId( item.id );
-								setIsBundle?.( isBundle );
+								setOfferType?.( item.type );
 								setIsListing( false );
 							} }
 						>
@@ -391,7 +391,7 @@ const OptionList = ( { setOptionId, setIsListing, setIsBundle } ) => {
 				enableSorting: false,
 				enableHiding: false,
 				render: ( { item } ) => {
-					const isBundle = item.type === 'fixed_bundle';
+					const offerLabel = getOfferLabel( item.type );
 					return (
 						<HStack spacing={ 2 } justify="start" alignment="center">
 							<Button
@@ -399,11 +399,11 @@ const OptionList = ( { setOptionId, setIsListing, setIsBundle } ) => {
 								title={ item.title }
 								onClick={ () => {
 									const url = new URL( window.location.href );
-									const newHash = `#${ isBundle ? 'bundle' : 'lists' }/${ item.id }`;
+									const newHash = `#${ getOfferHashPrefix( item.type ) }/${ item.id }`;
 									const newUrl = `${ url.pathname }${ url.search }${ newHash }`;
 									window.history.pushState( {}, '', newUrl );
 									setOptionId( item.id );
-									setIsBundle?.( isBundle );
+									setOfferType?.( item.type );
 									setIsListing( false );
 								} }
 								style={ {
@@ -420,7 +420,7 @@ const OptionList = ( { setOptionId, setIsListing, setIsBundle } ) => {
 									} }
 								/>
 							</Button>
-							{ isBundle && (
+							{ offerLabel && (
 								<span
 									style={ {
 										fontSize: 11,
@@ -432,7 +432,7 @@ const OptionList = ( { setOptionId, setIsListing, setIsBundle } ) => {
 										flexShrink: 0,
 									} }
 								>
-									{ __( 'Fixed Bundle', 'fast-bundle' ) }
+									{ offerLabel }
 								</span>
 							) }
 						</HStack>
@@ -479,13 +479,17 @@ const OptionList = ( { setOptionId, setIsListing, setIsBundle } ) => {
 				enableSorting: false,
 				enableHiding: false,
 				render: ( { item } ) => {
-					return item.type === 'fixed_bundle'
-						? `${ item.options } Products`
-						: `${ item.options } Options`;
+					if ( item.type === 'fixed_bundle' ) {
+						return `${ item.options } Products`;
+					}
+					if ( item.type === 'buy_x_get_y' ) {
+						return `${ item.options } Items`;
+					}
+					return `${ item.options } Options`;
 				},
 			},
 		],
-		[ setOptionId, setIsListing, setIsBundle, updateOption ]
+		[ setOptionId, setIsListing, setOfferType, updateOption ]
 	);
 
 	const processedData = useMemo( () => {
@@ -821,10 +825,14 @@ const OptionList = ( { setOptionId, setIsListing, setIsBundle } ) => {
 								buttonVariant="primary"
 								buttonSize=""
 							/>
-							<CreateFixedBundleButton
-								buttonVariant="secondary"
-								buttonSize=""
-							/>
+							{ Object.keys( OFFER_TYPES ).map( ( type ) => (
+								<CreateOfferButton
+									key={ type }
+									type={ type }
+									buttonVariant="secondary"
+									buttonSize=""
+								/>
+							) ) }
 						</HStack>
 					</HStack>
 				) }
@@ -847,10 +855,14 @@ const OptionList = ( { setOptionId, setIsListing, setIsBundle } ) => {
 									buttonVariant="primary"
 									buttonSize=""
 								/>
-								<CreateFixedBundleButton
-									buttonVariant="secondary"
-									buttonSize=""
-								/>
+								{ Object.keys( OFFER_TYPES ).map( ( type ) => (
+									<CreateOfferButton
+										key={ type }
+										type={ type }
+										buttonVariant="secondary"
+										buttonSize=""
+									/>
+								) ) }
 							</HStack>
 						}
 						view={ view }

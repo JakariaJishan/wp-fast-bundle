@@ -1282,6 +1282,34 @@ class Functions {
 	}
 
 	/**
+	 * Finds the first published "offer" post of a given `fbnd_option_type`
+	 * (e.g. `fixed_bundle`, `buy_x_get_y`) assigned to a product.
+	 *
+	 * Shared by every offer type's service class so each one only has to
+	 * pass its own type string rather than re-implement this lookup —
+	 * they all sit on the same `fbnd_option` CPT and the same assignment
+	 * meta as regular Option Sets, differing only by this meta flag.
+	 *
+	 * @param int    $product_id  The product ID.
+	 * @param string $option_type The `fbnd_option_type` meta value to match.
+	 *
+	 * @return int The offer post ID, or 0 when none applies.
+	 */
+	public function get_first_offer_for_product( int $product_id, string $option_type ): int {
+		foreach ( $this->get_product_option_ids( $product_id ) as $option_id ) {
+			if ( 'publish' !== get_post_status( $option_id ) ) {
+				continue;
+			}
+			if ( $option_type !== get_post_meta( $option_id, 'fbnd_option_type', true ) ) {
+				continue;
+			}
+			return (int) $option_id;
+		}
+
+		return 0;
+	}
+
+	/**
 	 * Retrieves product options from terms (categories, tags, brands).
 	 *
 	 * @param int    $product_id The product ID.

@@ -11,15 +11,26 @@ import { __ } from '@wordpress/i18n';
 import { close } from '@wordpress/icons';
 
 /**
- * Bundle item product picker: search WooCommerce products, add them to the
- * bundle with a quantity, remove them. Simple products only for now —
- * variable products are filtered out of the search results.
+ * Shared product picker used by every offer type's builder (Fixed Bundle's
+ * items, Buy X Get Y's triggers and rewards, ...): search WooCommerce
+ * products, add them with a quantity, remove them. Simple products only for
+ * now — variable products are filtered out of the search results.
  *
  * @param {Object}   props
- * @param {Array}    props.items    Selected bundle items: `{ product_id, quantity, name, image, price, permalink }`.
- * @param {Function} props.onChange Called with the next `items` array.
+ * @param {Array}    props.items       Selected items: `{ product_id, quantity, name, image, price, permalink }`.
+ * @param {Function} props.onChange    Called with the next `items` array.
+ * @param {string}   [props.label]     Field label above the search box.
+ * @param {string}   [props.emptyText] Shown when `items` is empty.
  */
-const ProductPicker = ( { items, onChange } ) => {
+const ProductPicker = ( {
+	items,
+	onChange,
+	label = __( 'Add products to this bundle', 'fast-bundle' ),
+	emptyText = __(
+		'No products added yet. Search above to add the first one.',
+		'fast-bundle'
+	),
+} ) => {
 	const [ term, setTerm ] = useState( '' );
 	const [ results, setResults ] = useState( [] );
 	const [ isSearching, setIsSearching ] = useState( false );
@@ -98,7 +109,7 @@ const ProductPicker = ( { items, onChange } ) => {
 			<div style={ { position: 'relative' } }>
 				<TextControl
 					__nextHasNoMarginBottom
-					label={ __( 'Add products to this bundle', 'fast-bundle' ) }
+					label={ label }
 					placeholder={ __( 'Search products…', 'fast-bundle' ) }
 					value={ term }
 					onChange={ setTerm }
@@ -161,12 +172,7 @@ const ProductPicker = ( { items, onChange } ) => {
 			</div>
 
 			{ items.length === 0 ? (
-				<Text variant="muted">
-					{ __(
-						'No products added yet. Search above to add the first one.',
-						'fast-bundle'
-					) }
-				</Text>
+				<Text variant="muted">{ emptyText }</Text>
 			) : (
 				<VStack spacing={ 2 }>
 					{ items.map( ( item ) => (
@@ -205,7 +211,7 @@ const ProductPicker = ( { items, onChange } ) => {
 											e.target.value
 										)
 									}
-									style={ { width: 56, height: 30 } }
+									style={ { width: 90, height: 30 } }
 								/>
 								<Button
 									icon={ close }

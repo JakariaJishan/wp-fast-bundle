@@ -110,11 +110,10 @@ const useNavStore = createStore( ( set ) => ( {
 // Keep the store in step with browser navigation. One listener for the app,
 // rather than one per mounted component.
 window.addEventListener( 'fbndlocationchange', () => {
-	let hash = window.location.hash;
-	hash =
-		hash.includes( '#lists/' ) || hash.includes( '#bundle/' )
-			? hash.split( '/' )[ 0 ]
-			: hash;
+	// Any '#prefix/{id}' hash (the lists route, or an offer type's own
+	// builder route) highlights the same top-level menu item as its bare
+	// '#prefix' form — strip the id segment for menu-highlighting purposes.
+	const hash = window.location.hash.replace( /^(#[^/]+)\/.*/, '$1' );
 	useNavStore.getState().setCurrentNav( hash.replace( '#', '' ) );
 } );
 

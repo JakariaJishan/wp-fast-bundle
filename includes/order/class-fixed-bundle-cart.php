@@ -1,13 +1,9 @@
 <?php // phpcs:ignore
 /**
- * Fixed Bundle storefront + cart wiring: renders the bundle widget on the
- * single product page, handles the "Add Bundle to Cart" AJAX request, and
- * keeps the bundle's items priced/grouped as one unit through cart, cart
- * changes, and checkout.
- *
- * Deliberately independent of the existing `CartPage`/`CheckoutPage`
- * classes, which belong to a separate (currently unwired) generic option
- * pricing feature — Fixed Bundle owns its own small pipeline end to end.
+ * Fixed Bundle storefront: renders the bundle widget on the single product
+ * page and handles the "Add Bundle to Cart" AJAX request. The generic
+ * cart/checkout mechanics (pricing, labeling, cascade removal, order meta)
+ * live in `Grouped_Offer_Cart`, shared with every other offer type.
  *
  * @package FBND\Includes\Order
  */
@@ -31,20 +27,25 @@ class Fixed_Bundle_Cart {
 	private $service;
 
 	/**
-	 * Setup class.
+	 * Shared grouped-cart-item mechanics.
+	 *
+	 * @var Grouped_Offer_Cart
 	 */
-	public function __construct() {
-		$this->service = new Fixed_Bundle();
+	private $grouped_cart;
+
+	/**
+	 * Setup class.
+	 *
+	 * @param Grouped_Offer_Cart $grouped_cart Shared grouped-cart-item mechanics.
+	 */
+	public function __construct( Grouped_Offer_Cart $grouped_cart ) {
+		$this->service      = new Fixed_Bundle();
+		$this->grouped_cart = $grouped_cart;
 
 		add_action( 'woocommerce_single_product_summary', array( $this, 'render_widget' ), 35 );
 
 		add_action( 'wp_ajax_fbnd_add_fixed_bundle', array( $this, 'ajax_add_to_cart' ) );
 		add_action( 'wp_ajax_nopriv_fbnd_add_fixed_bundle', array( $this, 'ajax_add_to_cart' ) );
-
-		add_action( 'woocommerce_before_calculate_totals', array( $this, 'apply_bundle_prices' ), 20 );
-		add_filter( 'woocommerce_get_item_data', array( $this, 'add_item_data' ), 10, 2 );
-		add_action( 'woocommerce_cart_item_removed', array( $this, 'cascade_remove' ), 10, 2 );
-		add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'add_order_line_item_meta' ), 10, 4 );
 	}
 
 	/**
@@ -70,9 +71,23 @@ class Fixed_Bundle_Cart {
 			return;
 		}
 
-		$this->enqueue_assets();
+		$this->grouped_cart->enqueue_assets();
+		wp_localize_script(
+			'fbnd-front-script',
+			'fbndFixedBundle',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'fbnd-nonce' ),
+				'i18n'    => array(
+					'adding'   => __( 'Adding…', 'fast-bundle' ),
+					'added'    => __( 'Bundle added to your cart.', 'fast-bundle' ),
+					'viewCart' => __( 'View cart', 'fast-bundle' ),
+					'error'    => __( 'Something went wrong. Please try again.', 'fast-bundle' ),
+				),
+			)
+		);
 
-		$totals    = $data['totals'];
+		$totals     = $data['totals'];
 		$has_saving = $totals['savings'] > 0;
 		?>
 		<div class="fbnd-fixed-bundle" data-bundle-id="<?php echo esc_attr( $bundle_id ); ?>">
@@ -123,41 +138,9 @@ class Fixed_Bundle_Cart {
 	}
 
 	/**
-	 * Enqueues the storefront widget's script and style, once per page load.
-	 *
-	 * @return void
-	 */
-	private function enqueue_assets() {
-		if ( wp_style_is( 'fbnd-fixed-bundle-style', 'enqueued' ) ) {
-			return;
-		}
-
-		fast_bundle()->enqueue_style( 'fbnd-fixed-bundle-style', 'fastbundle-fixed-bundle' );
-
-		$asset = fast_bundle()->get_script_asset( 'assets/js/fixed-bundle.js', array( 'jquery' ) );
-		wp_enqueue_script( 'fbnd-fixed-bundle-script', FBND_URL . 'assets/js/fixed-bundle.js', $asset['dependencies'], $asset['version'], true );
-
-		wp_localize_script(
-			'fbnd-fixed-bundle-script',
-			'fbndFixedBundle',
-			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'fbnd-nonce' ),
-				'i18n'    => array(
-					'adding'   => __( 'Adding…', 'fast-bundle' ),
-					'added'    => __( 'Bundle added to your cart.', 'fast-bundle' ),
-					'viewCart' => __( 'View cart', 'fast-bundle' ),
-					'error'    => __( 'Something went wrong. Please try again.', 'fast-bundle' ),
-				),
-			)
-		);
-	}
-
-	/**
 	 * Handles the "Add Bundle to Cart" AJAX request: revalidates and reprices
 	 * the bundle server-side (never trusting anything from the request beyond
-	 * the bundle id), then adds every item to the cart tagged with a shared
-	 * bundle key so it can be priced and removed as one unit.
+	 * the bundle id), then adds every item to the cart as one group.
 	 *
 	 * @return void
 	 */
@@ -176,28 +159,19 @@ class Fixed_Bundle_Cart {
 			wp_send_json_error( array( 'message' => $data->get_error_message() ) );
 		}
 
-		$bundle_key = 'fbnd_fb_' . $bundle_id . '_' . wp_generate_password( 8, false, false );
-
+		$items = array();
 		foreach ( $data['items'] as $item ) {
-			$unit_price = isset( $data['totals']['per_item'][ $item['product_id'] ] )
-				? $data['totals']['per_item'][ $item['product_id'] ]
-				: $item['price'];
-
-			$added = WC()->cart->add_to_cart(
-				$item['product_id'],
-				$item['quantity'],
-				0,
-				array(),
-				array(
-					'fbnd_bundle_key'        => $bundle_key,
-					'fbnd_bundle_id'         => $bundle_id,
-					'fbnd_bundle_item_price' => $unit_price,
-				)
+			$items[] = array(
+				'product_id' => $item['product_id'],
+				'quantity'   => $item['quantity'],
+				'unit_price' => $data['totals']['per_item'][ $item['product_id'] ] ?? $item['price'],
 			);
+		}
 
-			if ( ! $added ) {
-				wp_send_json_error( array( 'message' => __( 'Could not add the bundle to your cart. Please try again.', 'fast-bundle' ) ) );
-			}
+		$result = $this->grouped_cart->add_group_to_cart( $items, $bundle_id, __( 'Bundle', 'fast-bundle' ) );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 		}
 
 		wp_send_json_success(
@@ -207,87 +181,5 @@ class Fixed_Bundle_Cart {
 				'cart_url'   => wc_get_cart_url(),
 			)
 		);
-	}
-
-	/**
-	 * Overrides each bundle item's cart price with the discounted unit price
-	 * computed at add-to-cart time.
-	 *
-	 * @param \WC_Cart $cart The cart being totalled.
-	 * @return void
-	 */
-	public function apply_bundle_prices( $cart ) {
-		if ( is_admin() && ! defined( 'DOING_AJAX' ) ) {
-			return;
-		}
-
-		foreach ( $cart->get_cart() as $cart_item ) {
-			if ( isset( $cart_item['fbnd_bundle_item_price'] ) ) {
-				$cart_item['data']->set_price( $cart_item['fbnd_bundle_item_price'] );
-			}
-		}
-	}
-
-	/**
-	 * Shows which bundle a cart line belongs to, under the item in cart and
-	 * checkout.
-	 *
-	 * @param array $item_data Existing item data rows.
-	 * @param array $cart_item The cart item.
-	 * @return array Item data rows.
-	 */
-	public function add_item_data( $item_data, $cart_item ) {
-		if ( ! empty( $cart_item['fbnd_bundle_id'] ) ) {
-			$item_data[] = array(
-				'name'  => __( 'Bundle', 'fast-bundle' ),
-				'value' => get_the_title( $cart_item['fbnd_bundle_id'] ),
-			);
-		}
-		return $item_data;
-	}
-
-	/**
-	 * Cascades removal of the rest of a bundle's items when one of them is
-	 * removed from the cart, so the bundle always behaves as one unit.
-	 *
-	 * @param string   $cart_item_key The removed item's cart key.
-	 * @param \WC_Cart $cart          The cart.
-	 * @return void
-	 */
-	public function cascade_remove( $cart_item_key, $cart ) {
-		if ( empty( $cart->removed_cart_contents[ $cart_item_key ] ) ) {
-			return;
-		}
-
-		$removed = $cart->removed_cart_contents[ $cart_item_key ];
-		if ( empty( $removed['fbnd_bundle_key'] ) ) {
-			return;
-		}
-
-		$bundle_key = $removed['fbnd_bundle_key'];
-
-		foreach ( $cart->get_cart() as $key => $item ) {
-			if ( $key !== $cart_item_key && isset( $item['fbnd_bundle_key'] ) && $item['fbnd_bundle_key'] === $bundle_key ) {
-				$cart->remove_cart_item( $key );
-			}
-		}
-	}
-
-	/**
-	 * Persists which bundle an order line item belonged to.
-	 *
-	 * @param \WC_Order_Item_Product $item          The order line item.
-	 * @param string                 $cart_item_key The cart item key.
-	 * @param array                  $cart_item     The cart item.
-	 * @param \WC_Order              $order         The order.
-	 * @return void
-	 */
-	public function add_order_line_item_meta( $item, $cart_item_key, $cart_item, $order ) {
-		if ( empty( $cart_item['fbnd_bundle_id'] ) ) {
-			return;
-		}
-
-		$item->add_meta_data( '_fbnd_bundle_id', $cart_item['fbnd_bundle_id'] );
-		$item->add_meta_data( __( 'Bundle', 'fast-bundle' ), get_the_title( $cart_item['fbnd_bundle_id'] ) );
 	}
 }

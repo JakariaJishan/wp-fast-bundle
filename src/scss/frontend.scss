@@ -1,3 +1,9 @@
+// Per-offer-type storefront widget styles. Each offer type (Fixed Bundle,
+// Buy X Get Y, ...) gets its own partial here instead of its own webpack
+// entry — they all ship in this one stylesheet.
+@use "./frontend/fixed-bundle" as *;
+@use "./frontend/buy-x-get-y" as *;
+
 /* Variable Style */
 :root {
 	--fbnd-transition-md: 0.5s;

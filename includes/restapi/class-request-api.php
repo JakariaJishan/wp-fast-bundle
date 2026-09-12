@@ -837,9 +837,15 @@ class RequestApi {
 				$blocks            = get_post_meta( $id, 'fbnd_addons_blocks', true );
 				$all_blocks[ $id ] = $blocks;
 				$option_type       = get_post_meta( $id, 'fbnd_option_type', true ) ?: 'custom';
-				$options_count     = 'fixed_bundle' === $option_type
-					? count( is_array( $blocks ) && isset( $blocks['items'] ) && is_array( $blocks['items'] ) ? $blocks['items'] : array() )
-					: ( is_string( $blocks ) ? substr_count( $blocks, 'blockid' ) : substr_count( wp_json_encode( $blocks ), 'blockid' ) );
+				$blocks_arr        = is_array( $blocks ) ? $blocks : array();
+				if ( 'fixed_bundle' === $option_type ) {
+					$options_count = count( is_array( $blocks_arr['items'] ?? null ) ? $blocks_arr['items'] : array() );
+				} elseif ( 'buy_x_get_y' === $option_type ) {
+					$options_count = count( is_array( $blocks_arr['triggers'] ?? null ) ? $blocks_arr['triggers'] : array() )
+						+ count( is_array( $blocks_arr['rewards'] ?? null ) ? $blocks_arr['rewards'] : array() );
+				} else {
+					$options_count = is_string( $blocks ) ? substr_count( $blocks, 'blockid' ) : substr_count( wp_json_encode( $blocks ), 'blockid' );
+				}
 				$data[]            = array(
 					'id'       => $id,
 					'title'    => get_the_title(),

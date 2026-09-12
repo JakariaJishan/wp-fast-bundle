@@ -25,28 +25,11 @@ class Fixed_Bundle {
 	/**
 	 * Finds the first published Fixed Bundle assigned to a product.
 	 *
-	 * Reuses the existing generic assignment lookup (`get_product_option_ids`)
-	 * and filters it down to Fixed Bundle posts only, so it shares the exact
-	 * same all/specific-product/specific-category resolution logic as the
-	 * generic Option Sets.
-	 *
 	 * @param int $product_id The product ID.
 	 * @return int Bundle post ID, or 0 when none applies.
 	 */
 	public function get_for_product( $product_id ) {
-		$option_ids = fast_bundle()->get_product_option_ids( (int) $product_id );
-
-		foreach ( $option_ids as $option_id ) {
-			if ( 'publish' !== get_post_status( $option_id ) ) {
-				continue;
-			}
-			if ( self::OPTION_TYPE !== get_post_meta( $option_id, 'fbnd_option_type', true ) ) {
-				continue;
-			}
-			return (int) $option_id;
-		}
-
-		return 0;
+		return fast_bundle()->get_first_offer_for_product( (int) $product_id, self::OPTION_TYPE );
 	}
 
 	/**

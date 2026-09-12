@@ -2,7 +2,8 @@ import { createRoot, useEffect, useRef, useState } from '@wordpress/element';
 import Header from './components/header';
 import Analytics from './pages/analytics';
 import Editor from './pages/editor';
-import FixedBundleEditor from './pages/fixed-bundle';
+import BuyXGetYEditor from './pages/editor/buy-x-get-y';
+import FixedBundleEditor from './pages/editor/fixed-bundle';
 import { License } from './pages/license';
 import OptionList from './pages/option-lists';
 import { OurProduct } from './pages/our-products';
@@ -10,6 +11,7 @@ import Overview from './pages/overview';
 import Settings from './pages/settings';
 import useNavStore, { handlePageHash } from './store/nav/useNavStore';
 import Toast from './utils/toast';
+import { OFFER_TYPES } from './utils/offer-types';
 
 import './scss/fastbundle-backend.scss';
 
@@ -22,27 +24,41 @@ const useFreshInstallMenuClass = ( isFreshInstall ) => {
 };
 
 /**
- * Which of the '#lists/{id}' / '#bundle/{id}' hash families the current URL
- * is in, if any.
+ * Which builder component handles each registered offer type's hash prefix.
+ * Adding a new offer type to `OFFER_TYPES` and its builder component here is
+ * the only wiring a new offer needs — everything else in `Dashboard` is
+ * generic.
+ */
+const OFFER_EDITORS = {
+	[ OFFER_TYPES.fixed_bundle.prefix ]: FixedBundleEditor,
+	[ OFFER_TYPES.buy_x_get_y.prefix ]: BuyXGetYEditor,
+};
+
+/**
+ * Which hash family (`#lists/{id}`, or one of the registered offer prefixes)
+ * the current URL is in, if any.
  *
  * @param {string} hash `window.location.hash`.
- * @return {'lists'|'bundle'|''} The matching prefix, or '' when neither.
+ * @return {string} The matching prefix ('lists' or an offer prefix), or ''
+ *                   when the hash doesn't have an id segment.
  */
 const getHashPrefix = ( hash ) => {
-	if ( hash.includes( '#bundle/' ) ) {
-		return 'bundle';
-	}
 	if ( hash.includes( '#lists/' ) ) {
 		return 'lists';
 	}
-	return '';
+	const prefix = Object.keys( OFFER_EDITORS ).find( ( p ) =>
+		hash.includes( `#${ p }/` )
+	);
+	return prefix || '';
 };
 
 const Dashboard = () => {
 	const pageHash = window.location.hash;
 	const initialPrefix = getHashPrefix( pageHash );
 	const [ isListing, setIsListing ] = useState( ! initialPrefix );
-	const [ isBundle, setIsBundle ] = useState( initialPrefix === 'bundle' );
+	const [ offerPrefix, setOfferPrefix ] = useState(
+		OFFER_EDITORS[ initialPrefix ] ? initialPrefix : ''
+	);
 	const pageOptionid = initialPrefix ? pageHash?.split( '/' )[ 1 ] : '';
 	const [ optionId, setOptionId ] = useState( pageOptionid );
 
@@ -50,16 +66,17 @@ const Dashboard = () => {
 		const hash = window.location.hash;
 		const splited = hash?.split( '/' );
 		if ( hash && splited.length > 1 ) {
+			const prefix = getHashPrefix( hash );
 			setOptionId( splited[ 1 ] );
-			setIsBundle( getHashPrefix( hash ) === 'bundle' );
+			setOfferPrefix( OFFER_EDITORS[ prefix ] ? prefix : '' );
 			setIsListing( false );
 		}
 	}, [] );
 
-	const stateRef = useRef( { isListing, optionId, isBundle } );
+	const stateRef = useRef( { isListing, optionId, offerPrefix } );
 	useEffect( () => {
-		stateRef.current = { isListing, optionId, isBundle };
-	}, [ isListing, optionId, isBundle ] );
+		stateRef.current = { isListing, optionId, offerPrefix };
+	}, [ isListing, optionId, offerPrefix ] );
 
 	useEffect( () => {
 		const abortControl = new AbortController();
@@ -71,8 +88,9 @@ const Dashboard = () => {
 
 			if ( stateRef.current.isListing ) {
 				if ( newOptionId ) {
+					const prefix = getHashPrefix( hash );
 					setOptionId( newOptionId );
-					setIsBundle( getHashPrefix( hash ) === 'bundle' );
+					setOfferPrefix( OFFER_EDITORS[ prefix ] ? prefix : '' );
 					setIsListing( false );
 				}
 			} else if ( ! stateRef.current.isListing && ! newOptionId ) {
@@ -90,6 +108,8 @@ const Dashboard = () => {
 		};
 	}, [] );
 
+	const OfferEditor = OFFER_EDITORS[ offerPrefix ];
+
 	return (
 		<>
 			{ isListing && <Header /> }
@@ -100,12 +120,14 @@ const Dashboard = () => {
 					<OptionList
 						setIsListing={ setIsListing }
 						setOptionId={ setOptionId }
-						setIsBundle={ setIsBundle }
+						setOfferType={ ( type ) =>
+							setOfferPrefix( OFFER_TYPES[ type ]?.prefix || '' )
+						}
 					/>
-				) : isBundle ? (
-					<FixedBundleEditor
-						bundleId={ optionId }
-						setBundleId={ setOptionId }
+				) : OfferEditor ? (
+					<OfferEditor
+						optionId={ optionId }
+						setOptionId={ setOptionId }
 						setIsListing={ setIsListing }
 					/>
 				) : (
@@ -152,12 +174,13 @@ const useRouteRenderer = ( currentNav, isFreshInstall ) => {
 		return { component: Dashboard, showHeader: false };
 	}
 
-	// Handle special case for the lists/bundle routes
-	if (
-		currentNav === 'lists' ||
-		currentNav.includes( 'lists' ) ||
-		currentNav.includes( 'bundle' )
-	) {
+	// Handle special case for the lists route and every registered offer
+	// type's own hash prefix (e.g. 'bundle', 'bxgy').
+	const dashboardPrefixes = [
+		'lists',
+		...Object.values( OFFER_TYPES ).map( ( offer ) => offer.prefix ),
+	];
+	if ( dashboardPrefixes.some( ( prefix ) => currentNav.includes( prefix ) ) ) {
 		return { component: Dashboard, showHeader: false };
 	}
 

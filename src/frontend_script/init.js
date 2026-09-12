@@ -1,8 +1,10 @@
+import { initBuyXGetYActions } from './buy-x-get-y';
+import { initFixedBundleActions } from './fixed-bundle';
 import fbndFrontendState from './state';
 
 /**
- * Main initialization function for the storefront bundle display.
- * Placeholder entry point — wire up bundle-specific field handlers here.
+ * Main initialization function for the storefront bundle display. Runs each
+ * offer type's own handler; add a new one here when a new offer type ships.
  *
  * @function initFbndActions
  */
@@ -10,4 +12,7 @@ export function initFbndActions() {
 	fbndFrontendState.updateBasePrice(
 		Number( document.getElementById( 'fbnd_base_price' )?.textContent || 0 )
 	);
+
+	initFixedBundleActions();
+	initBuyXGetYActions();
 }
