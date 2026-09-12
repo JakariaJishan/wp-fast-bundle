@@ -941,14 +941,14 @@ class RequestApi {
 	public function get_product_search_callback( \WP_REST_Request $request ) {
 		$params         = $request->get_params();
 		$search_keyword = isset( $params['term'] ) ? sanitize_text_field( $params['term'] ) : '';
-		$limit          = isset( $params['limit'] ) ? absint( $params['limit'] ) : 5;
+		$limit          = isset( $params['limit'] ) ? absint( $params['limit'] ) : 10;
 		$exclude_ids    = isset( $params['excludes'] ) ? $params['excludes'] : array();
 
 		// Load the product data store.
 		$data_store = WC_Data_Store::load( 'product' );
 
 		$include_ids = array();
-		$limit       = '5';
+		$limit       = '10';
 		$ids         = $data_store->search_products( $search_keyword, '', false, false, $limit, $include_ids, $exclude_ids );
 		$products    = array();
 

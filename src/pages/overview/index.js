@@ -1,7 +1,8 @@
-import CreateOptionDropdown from '@/components/create-option-dropdown';
+import CreateOfferButton from '@/components/create-offer-button';
 import DataChart from '@/components/graph/data-chart';
 import useNavStore from '@/store/nav/useNavStore';
 import Icons from '@/utils/icons';
+import { OFFER_TYPES } from '@/utils/offer-types';
 import apiFetch from '@wordpress/api-fetch';
 import {
 	Button,
@@ -287,7 +288,19 @@ const Overview = () => {
 							) }
 						</Text>
 						<FlexItem>
-							<CreateOptionDropdown />
+							<HStack spacing={ 2 }>
+								{ Object.keys( OFFER_TYPES ).map( ( type ) => (
+									<CreateOfferButton
+										key={ type }
+										type={ type }
+										buttonVariant={
+											type === 'fixed_bundle'
+												? 'primary'
+												: 'secondary'
+										}
+									/>
+								) ) }
+							</HStack>
 						</FlexItem>
 					</VStack>
 					<VStack>

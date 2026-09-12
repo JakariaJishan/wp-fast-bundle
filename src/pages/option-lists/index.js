@@ -15,15 +15,13 @@ import { DataViews } from '@wordpress/dataviews';
 import { __ } from '@wordpress/i18n';
 
 import CreateOfferButton from '@/components/create-offer-button';
-import CreateOptionDropdown from '@/components/create-option-dropdown';
 import { getOfferHashPrefix, getOfferLabel, OFFER_TYPES } from '@/utils/offer-types';
-import TutorialModal from '@/components/tutorial-modal';
 import {
 	Button,
 	Card,
 	CardBody,
-	__experimentalHStack as HStack,
 	__experimentalHeading as Heading,
+	__experimentalHStack as HStack,
 	Icon,
 	__experimentalText as Text,
 	ToggleControl,
@@ -37,7 +35,6 @@ import {
 	trash,
 	upload,
 } from '@wordpress/icons';
-import ExpiredMessage from '@/components/expired-message';
 
 const VIEW_PREFS_STORAGE_KEY = 'fbnd_option_list_view_prefs';
 const PERSISTED_VIEW_KEYS = [ 'fields', 'sort', 'perPage', 'layout' ];
@@ -577,10 +574,11 @@ const OptionList = ( { setOptionId, setIsListing, setOfferType } ) => {
 				isPrimary: true,
 				callback: ( items ) => {
 					const url = new URL( window.location.href );
-					const newHash = `#lists/${ items[ 0 ].id }`;
+					const newHash = `#${ getOfferHashPrefix( items[ 0 ].type ) }/${ items[ 0 ].id }`;
 					const newUrl = `${ url.pathname }${ url.search }${ newHash }`;
 					window.history.pushState( {}, '', newUrl );
 					setOptionId( items[ 0 ].id );
+					setOfferType?.( items[ 0 ].type );
 					setIsListing( false );
 				},
 			},
@@ -771,6 +769,7 @@ const OptionList = ( { setOptionId, setIsListing, setOfferType } ) => {
 		deleteOption,
 		setOptionId,
 		setIsListing,
+		setOfferType,
 	] );
 
 	const paginationInfo = {
@@ -809,22 +808,7 @@ const OptionList = ( { setOptionId, setIsListing, setOfferType } ) => {
 							) }
 						</Text>
 						<HStack justify="center">
-							<TutorialModal
-								label={ __(
-									'Watch Tutorial',
-									'fast-bundle'
-								) }
-								modalTitle={ __(
-									'Woocommerce Product Addons',
-									'fast-bundle'
-								) }
-								variant="secondary"
-								videoUrl="https://www.youtube.com/embed/KJj-Eav7_l4?autoplay=1"
-							/>
-							<CreateOptionDropdown
-								buttonVariant="primary"
-								buttonSize=""
-							/>
+							
 							{ Object.keys( OFFER_TYPES ).map( ( type ) => (
 								<CreateOfferButton
 									key={ type }
@@ -842,7 +826,6 @@ const OptionList = ( { setOptionId, setIsListing, setOfferType } ) => {
 
 	return (
 		<div className="fbnd-container" style={ { marginTop: 40 } }>
-			<ExpiredMessage styles={ { marginBottom: '20px' } } />
 			<Card className="fbnd-dataviews">
 				<CardBody>
 					<DataViews
@@ -851,10 +834,6 @@ const OptionList = ( { setOptionId, setIsListing, setOfferType } ) => {
 						} }
 						header={
 							<HStack alignment={ 'center' }>
-								<CreateOptionDropdown
-									buttonVariant="primary"
-									buttonSize=""
-								/>
 								{ Object.keys( OFFER_TYPES ).map( ( type ) => (
 									<CreateOfferButton
 										key={ type }

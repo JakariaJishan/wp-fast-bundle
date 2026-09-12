@@ -1,0 +1,11 @@
+// Offer-widget styles for the admin builder's live preview panel.
+//
+// Deliberately separate from `frontend.scss`: that file also carries a
+// global reset (`html, * { box-sizing: border-box }`) and a large generic
+// utility-class framework meant for the storefront, neither of which should
+// run inside wp-admin. This aggregator only pulls in each offer type's own
+// widget partial — the same ones `frontend.scss` uses — so the preview
+// renders with the exact same widget styles without those global side
+// effects.
+@use "./frontend/fixed-bundle" as *;
+@use "./frontend/buy-x-get-y" as *;

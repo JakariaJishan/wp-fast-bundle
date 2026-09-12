@@ -2,6 +2,7 @@ import {
 	Button,
 	Card,
 	CardBody,
+	__experimentalHeading as Heading,
 	__experimentalHStack as HStack,
 	Icon,
 	Modal,
@@ -42,6 +43,7 @@ import { arrowUpLeft, check } from '@wordpress/icons';
  * @param {Function} props.onCloseTitleAlert    Closes that modal.
  * @param {string}   props.titleRequiredMessage Message shown in that modal.
  * @param {React.ReactNode} props.children      The builder's own body content.
+ * @param {React.ReactNode} [props.preview]     A live preview of the storefront widget, shown in a sticky side panel.
  */
 const OfferEditorShell = ( {
 	isLoading,
@@ -58,6 +60,7 @@ const OfferEditorShell = ( {
 	onCloseTitleAlert,
 	titleRequiredMessage,
 	children,
+	preview,
 } ) => {
 	const [ isExitModalOpen, setIsExitModalOpen ] = useState( false );
 
@@ -211,12 +214,67 @@ const OfferEditorShell = ( {
 				</CardBody>
 			</Card>
 
-			<VStack
-				spacing={ 4 }
-				style={ { maxWidth: 720, margin: '24px auto', padding: '0 24px' } }
+			<HStack
+				spacing={ 6 }
+				alignment="top"
+				wrap
+				style={ { maxWidth: 1180, margin: '24px auto', padding: '0 24px' } }
 			>
-				{ children }
-			</VStack>
+				<VStack spacing={ 4 } style={ { flex: '1 1 640px', maxWidth: 720 } }>
+					{ children }
+				</VStack>
+
+				{ preview && (
+					<div
+						style={ {
+							flex: '1 1 320px',
+							maxWidth: 380,
+							position: 'sticky',
+							top: 84,
+						} }
+					>
+						<Card className="fbnd-card-panel">
+							<CardBody>
+								<VStack spacing={ 3 }>
+									<Heading level={ 4 }>
+										{ __( 'Preview', 'fast-bundle' ) }
+									</Heading>
+									<div>
+										<img
+											src={ `${ fbndBackendData?.url || '' }assets/img/default-product.svg` }
+											alt=""
+											style={ {
+												display: 'block',
+												width: '100%',
+												maxHeight: 160,
+												objectFit: 'contain',
+												background: '#f6f7f7',
+												borderRadius: 4,
+												padding: 16,
+												boxSizing: 'border-box',
+											} }
+										/>
+										<Text
+											variant="muted"
+											style={ {
+												display: 'block',
+												marginTop: 6,
+												fontSize: 11,
+											} }
+										>
+											{ __(
+												'A stand-in for the product page image — the widget below appears under it on the storefront.',
+												'fast-bundle'
+											) }
+										</Text>
+									</div>
+									{ preview }
+								</VStack>
+							</CardBody>
+						</Card>
+					</div>
+				) }
+			</HStack>
 		</div>
 	);
 };

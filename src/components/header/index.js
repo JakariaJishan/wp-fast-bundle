@@ -1,4 +1,6 @@
+import CreateOfferButton from '@/components/create-offer-button';
 import useNavStore from '@/store/nav/useNavStore';
+import { OFFER_TYPES } from '@/utils/offer-types';
 import icons from '@/utils/icons';
 import {
 	Button,
@@ -15,7 +17,6 @@ import { useViewportMatch } from '@wordpress/compose';
 import { useLayoutEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { chevronDown, chevronUp, menu, plugins } from '@wordpress/icons';
-import CreateOptionDropdown from '../create-option-dropdown';
 import Hellobar from './hello-bar';
 import './style.scss';
 const UPGRADE_PRO_URL = '#';
@@ -134,11 +135,6 @@ const Header = () => {
 		// When exceedingIndex changes, the More button mounts/unmounts — recalculate.
 		scheduleCalculateWidths();
 	}, [ exceedingIndex ] );
-
-	const navigateToCreate = () => {
-		setCurrentNav( 'lists' );
-		window.location.href = fbndBackendData.db_url + 'lists/new';
-	};
 
 	const handleMobileNav = ( to ) => {
 		setCurrentNav( to );
@@ -264,15 +260,20 @@ const Header = () => {
 								spacing={ isXLarge ? 4 : 2 }
 								style={ { padding: '16px 0px' } }
 							>
-								<CreateOptionDropdown
-									size={
-										isXLarge
-											? 'default'
-											: isMobile
-											? 'small'
-											: 'compact'
-									}
-								/>
+								{ Object.keys( OFFER_TYPES ).map( ( type ) => (
+									<CreateOfferButton
+										key={ type }
+										type={ type }
+										buttonVariant="primary"
+										size={
+											isXLarge
+												? 'default'
+												: isMobile
+												? 'small'
+												: 'compact'
+										}
+									/>
+								) ) }
 
 								{ ! isTab && (
 									<HStack alignment="left" ref={ menuRef }>

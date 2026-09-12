@@ -17,6 +17,7 @@ import { __ } from '@wordpress/i18n';
 import AssignPanel from '../assign-panel';
 import OfferEditorShell from '../offer-editor-shell';
 import ProductPicker from '../product-picker';
+import BuyXGetYPreview from './preview';
 import RewardDiscount from './reward-discount';
 
 const OPTION_TYPE = 'buy_x_get_y';
@@ -232,6 +233,15 @@ const BuyXGetYEditor = ( { optionId, setOptionId, setIsListing } ) => {
 				'Please enter a name for this deal before saving.',
 				'fast-bundle'
 			) }
+			preview={
+				<BuyXGetYPreview
+					title={ title }
+					triggers={ triggers }
+					rewards={ rewards }
+					rewardDiscount={ rewardDiscount }
+					display={ display }
+				/>
+			}
 		>
 			<Card className="fbnd-card-panel">
 				<CardBody>

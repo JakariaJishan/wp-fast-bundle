@@ -94,6 +94,13 @@ class Initialization {
 				fast_bundle()->enqueue_style( 'fbnd-editor-css', 'fastbundle' );
 				fast_bundle()->enqueue_style( 'fbnd-editor-css2', 'style-fastbundle' );
 				fast_bundle()->enqueue_style( 'fbnd-block-css', 'fastbundle-blocks' );
+				// Same offer-widget styles the storefront uses (not the full
+				// `fastbundle-frontend` stylesheet, which also carries a
+				// global reset and generic utility classes not meant to run
+				// inside wp-admin), so each offer type's builder preview
+				// (Fixed Bundle, Buy X Get Y, ...) renders with the real
+				// widget styles rather than an admin-side approximation.
+				fast_bundle()->enqueue_style( 'fbnd-editor-preview-css', 'fastbundle-editor-preview' );
 
 				// Scripts.
 				fast_bundle()->enqueue_script( 'fbnd-editor-script', 'fastbundle' );

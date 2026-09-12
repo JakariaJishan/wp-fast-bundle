@@ -119,6 +119,10 @@ defaultConfig = {
 			__dirname,
 			'src/scss/frontend.scss'
 		),
+		'fastbundle-editor-preview': path.resolve(
+			__dirname,
+			'src/scss/editor-preview.scss'
+		),
 	},
 	output: {
 		...( defaultConfig.output || {} ),

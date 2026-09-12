@@ -18,6 +18,7 @@ import AssignPanel from '../assign-panel';
 import OfferEditorShell from '../offer-editor-shell';
 import ProductPicker from '../product-picker';
 import DiscountSettings from './discount-settings';
+import FixedBundlePreview from './preview';
 
 const OPTION_TYPE = 'fixed_bundle';
 const HASH_PREFIX = OFFER_TYPES[ OPTION_TYPE ].prefix;
@@ -241,6 +242,14 @@ const FixedBundleEditor = ( { optionId, setOptionId, setIsListing } ) => {
 				'Please enter a name for this bundle before saving.',
 				'fast-bundle'
 			) }
+			preview={
+				<FixedBundlePreview
+					title={ title }
+					items={ items }
+					discount={ discount }
+					display={ display }
+				/>
+			}
 		>
 			<Card className="fbnd-card-panel">
 				<CardBody>
