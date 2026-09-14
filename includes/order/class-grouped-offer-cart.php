@@ -30,6 +30,7 @@ class Grouped_Offer_Cart {
 		add_filter( 'woocommerce_get_item_data', array( $this, 'add_item_data' ), 10, 2 );
 		add_action( 'woocommerce_cart_item_removed', array( $this, 'cascade_remove' ), 10, 2 );
 		add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'add_order_line_item_meta' ), 10, 4 );
+		add_filter( 'woocommerce_shipping_free_shipping_is_available', array( $this, 'maybe_force_free_shipping' ), 10, 2 );
 	}
 
 	/**
@@ -37,28 +38,38 @@ class Grouped_Offer_Cart {
 	 * key ties them together so they can be priced, labeled, and removed as
 	 * a unit.
 	 *
-	 * @param array  $items    List of `{ product_id, quantity, unit_price }`, plus
-	 *                         `variation_id`/`variation` for a resolved variable item.
-	 * @param int    $offer_id The `fbnd_option` post id this group belongs to.
-	 * @param string $label    Human label for cart/order display, e.g. 'Bundle' or 'Deal'.
+	 * @param array  $items         List of `{ product_id, quantity, unit_price }`, plus
+	 *                               `variation_id`/`variation` for a resolved variable item.
+	 * @param int    $offer_id      The `fbnd_option` post id this group belongs to.
+	 * @param string $label         Human label for cart/order display, e.g. 'Bundle' or 'Deal'.
+	 * @param bool   $free_shipping Whether this group's discount is the "free shipping"
+	 *                              type — flags the cart so `maybe_force_free_shipping()`
+	 *                              unlocks the shop's Free Shipping method, same as a
+	 *                              coupon's "Allow free shipping" checkbox does.
 	 *
 	 * @return true|\WP_Error
 	 */
-	public function add_group_to_cart( array $items, $offer_id, $label ) {
+	public function add_group_to_cart( array $items, $offer_id, $label, $free_shipping = false ) {
 		$group_key = 'fbnd_grp_' . $offer_id . '_' . wp_generate_password( 8, false, false );
 
 		foreach ( $items as $item ) {
+			$cart_item_data = array(
+				'fbnd_group_key'        => $group_key,
+				'fbnd_group_offer_id'   => $offer_id,
+				'fbnd_group_label'      => $label,
+				'fbnd_group_item_price' => $item['unit_price'],
+			);
+
+			if ( $free_shipping ) {
+				$cart_item_data['fbnd_group_free_shipping'] = true;
+			}
+
 			$added = WC()->cart->add_to_cart(
 				$item['product_id'],
 				$item['quantity'],
 				$item['variation_id'] ?? 0,
 				$item['variation'] ?? array(),
-				array(
-					'fbnd_group_key'        => $group_key,
-					'fbnd_group_offer_id'   => $offer_id,
-					'fbnd_group_label'      => $label,
-					'fbnd_group_item_price' => $item['unit_price'],
-				)
+				$cart_item_data
 			);
 
 			if ( ! $added ) {
@@ -67,6 +78,32 @@ class Grouped_Offer_Cart {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Unlocks the shop's "Free Shipping" shipping method (if configured in
+	 * the matching shipping zone) when the cart contains a group whose
+	 * discount type is "free_shipping" — the same mechanism a WooCommerce
+	 * coupon's "Allow free shipping" checkbox uses, so it composes correctly
+	 * with however the merchant already has shipping configured rather than
+	 * forcing a cost override on every method.
+	 *
+	 * @param bool  $is_available Whether the Free Shipping method is already available.
+	 * @param array $package      The shipping package being priced.
+	 * @return bool
+	 */
+	public function maybe_force_free_shipping( $is_available, $package ) {
+		if ( $is_available || ! WC()->cart ) {
+			return $is_available;
+		}
+
+		foreach ( WC()->cart->get_cart() as $cart_item ) {
+			if ( ! empty( $cart_item['fbnd_group_free_shipping'] ) ) {
+				return true;
+			}
+		}
+
+		return $is_available;
 	}
 
 	/**

@@ -100,6 +100,17 @@
 		padding: 2px 8px;
 	}
 
+	&__free-shipping {
+		display: inline-block;
+		margin-bottom: 10px;
+		font-size: 12px;
+		font-weight: var(--fbnd-font-weight-semi, 500);
+		color: var(--fbnd-color-primary, #86a62c);
+		background: var(--fbnd-color-medium, #e8f1d0);
+		border-radius: var(--fbnd-border-radius-sm, 2px);
+		padding: 2px 8px;
+	}
+
 	&__button {
 		width: 100%;
 	}

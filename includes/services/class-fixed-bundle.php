@@ -99,7 +99,7 @@ class Fixed_Bundle {
 	 * Reads a bundle's saved discount settings.
 	 *
 	 * @param int $bundle_id Bundle post ID.
-	 * @return array { type: percentage|fixed_amount|fixed_price, value: float }.
+	 * @return array { type: percentage|fixed_amount|fixed_price|no_discount|free_shipping, value: float }.
 	 */
 	public function get_discount( $bundle_id ) {
 		$content  = get_post_meta( $bundle_id, 'fbnd_addons_blocks', true );
@@ -108,7 +108,7 @@ class Fixed_Bundle {
 			: array();
 
 		$type = isset( $discount['type'] ) ? sanitize_text_field( $discount['type'] ) : 'percentage';
-		if ( ! in_array( $type, array( 'percentage', 'fixed_amount', 'fixed_price' ), true ) ) {
+		if ( ! in_array( $type, array( 'percentage', 'fixed_amount', 'fixed_price', 'no_discount', 'free_shipping' ), true ) ) {
 			$type = 'percentage';
 		}
 
@@ -173,6 +173,13 @@ class Fixed_Bundle {
 				break;
 			case 'fixed_price':
 				$discounted_total = max( 0, $value );
+				break;
+			case 'no_discount':
+			case 'free_shipping':
+				// Neither reduces the item price — "free_shipping" is a
+				// shipping-cost incentive, applied separately by
+				// `Grouped_Offer_Cart::maybe_force_free_shipping()`.
+				$discounted_total = $original_total;
 				break;
 			case 'percentage':
 			default:

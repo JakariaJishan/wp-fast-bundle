@@ -30,6 +30,11 @@ export const calculateTotals = ( items, discount ) => {
 		discountedTotal = Math.max( 0, originalTotal - value );
 	} else if ( discount.type === 'fixed_price' ) {
 		discountedTotal = Math.max( 0, value );
+	} else if (
+		discount.type === 'no_discount' ||
+		discount.type === 'free_shipping'
+	) {
+		discountedTotal = originalTotal;
 	} else {
 		discountedTotal = Math.max( 0, originalTotal * ( 1 - value / 100 ) );
 	}
@@ -47,8 +52,11 @@ export const calculateTotals = ( items, discount ) => {
  * @param {Object}   props.discount `{ type, value }`.
  * @param {Function} props.onChange Called with the next `discount` object.
  */
+const NO_VALUE_DISCOUNT_TYPES = [ 'no_discount', 'free_shipping' ];
+
 const DiscountSettings = ( { items, discount, onChange } ) => {
 	const totals = calculateTotals( items, discount );
+	const needsValue = ! NO_VALUE_DISCOUNT_TYPES.includes( discount.type );
 
 	return (
 		<VStack spacing={ 3 }>
@@ -68,21 +76,39 @@ const DiscountSettings = ( { items, discount, onChange } ) => {
 						label: __( 'Fixed bundle price', 'fast-bundle' ),
 						value: 'fixed_price',
 					},
+					{
+						label: __( 'No discount', 'fast-bundle' ),
+						value: 'no_discount',
+					},
+					{
+						label: __( 'Free shipping', 'fast-bundle' ),
+						value: 'free_shipping',
+					},
 				] }
 				onChange={ ( type ) => onChange( { ...discount, type } ) }
 			/>
-			<TextControl
-				__nextHasNoMarginBottom
-				type="number"
-				min="0"
-				label={
-					discount.type === 'percentage'
-						? __( 'Percentage (%)', 'fast-bundle' )
-						: __( 'Amount', 'fast-bundle' )
-				}
-				value={ discount.value }
-				onChange={ ( value ) => onChange( { ...discount, value } ) }
-			/>
+			{ needsValue && (
+				<TextControl
+					__nextHasNoMarginBottom
+					type="number"
+					min="0"
+					label={
+						discount.type === 'percentage'
+							? __( 'Percentage (%)', 'fast-bundle' )
+							: __( 'Amount', 'fast-bundle' )
+					}
+					value={ discount.value }
+					onChange={ ( value ) => onChange( { ...discount, value } ) }
+				/>
+			) }
+			{ discount.type === 'free_shipping' && (
+				<Text variant="muted">
+					{ __(
+						'Items stay at full price; the order qualifies for the shop’s Free Shipping method at checkout (requires one configured in WooCommerce shipping zones, same as a coupon’s "Allow free shipping").',
+						'fast-bundle'
+					) }
+				</Text>
+			) }
 
 			<HStack
 				justify="space-between"

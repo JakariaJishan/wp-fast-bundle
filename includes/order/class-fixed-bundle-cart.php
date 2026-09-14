@@ -153,6 +153,12 @@ class Fixed_Bundle_Cart {
 				</span>
 			</div>
 
+			<?php if ( 'free_shipping' === $data['discount']['type'] ) : ?>
+				<span class="fbnd-fixed-bundle__free-shipping">
+					<?php esc_html_e( 'Free Shipping', 'fast-bundle' ); ?>
+				</span>
+			<?php endif; ?>
+
 			<button type="button" class="fbnd-fixed-bundle__button button alt" data-bundle-id="<?php echo esc_attr( $bundle_id ); ?>">
 				<?php echo esc_html( $data['display']['buttonText'] ); ?>
 			</button>
@@ -196,7 +202,12 @@ class Fixed_Bundle_Cart {
 			);
 		}
 
-		$result = $this->grouped_cart->add_group_to_cart( $items, $bundle_id, __( 'Bundle', 'fast-bundle' ) );
+		$result = $this->grouped_cart->add_group_to_cart(
+			$items,
+			$bundle_id,
+			__( 'Bundle', 'fast-bundle' ),
+			'free_shipping' === $data['discount']['type']
+		);
 
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ) );

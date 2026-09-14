@@ -225,6 +225,8 @@ function recalcFixedBundleTotals( widget ) {
 		discountedTotal = Math.max( 0, originalTotal - numValue );
 	} else if ( 'fixed_price' === type ) {
 		discountedTotal = Math.max( 0, numValue );
+	} else if ( 'no_discount' === type || 'free_shipping' === type ) {
+		discountedTotal = originalTotal;
 	} else {
 		discountedTotal = Math.max( 0, originalTotal * ( 1 - numValue / 100 ) );
 	}

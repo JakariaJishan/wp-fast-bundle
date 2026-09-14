@@ -108,7 +108,7 @@ function handleAddToCart( button ) {
 						window.jQuery( document.body ).trigger( 'added_to_cart', [ {}, '', button ] );
 					} catch ( error ) {
 						// eslint-disable-next-line no-console
-						console.error( 'fast-bundle: a wc_fragment_refresh/added_to_cart listener threw', error );
+						console.log( 'fast-bundle: a wc_fragment_refresh/added_to_cart listener threw', error );
 					}
 				}
 			} else {

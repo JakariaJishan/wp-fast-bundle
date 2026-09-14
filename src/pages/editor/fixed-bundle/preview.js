@@ -83,6 +83,12 @@ const FixedBundlePreview = ( { title, items, discount, display } ) => {
 				) }
 			</div>
 
+			{ discount.type === 'free_shipping' && (
+				<span className="fbnd-fixed-bundle__free-shipping">
+					{ __( 'Free Shipping', 'fast-bundle' ) }
+				</span>
+			) }
+
 			<button type="button" className="fbnd-fixed-bundle__button button alt" disabled>
 				{ display.buttonText || __( 'Add Bundle to Cart', 'fast-bundle' ) }
 			</button>
