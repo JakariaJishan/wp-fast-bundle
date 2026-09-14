@@ -7,6 +7,7 @@ import {
 	Card,
 	CardBody,
 	__experimentalHeading as Heading,
+	RadioControl,
 	TextareaControl,
 	TextControl,
 	__experimentalVStack as VStack,
@@ -24,7 +25,11 @@ const OPTION_TYPE = 'fixed_bundle';
 const HASH_PREFIX = OFFER_TYPES[ OPTION_TYPE ].prefix;
 
 const DEFAULT_DISCOUNT = { type: 'percentage', value: 10 };
-const DEFAULT_DISPLAY = { description: '', buttonText: '' };
+const DEFAULT_DISPLAY = {
+	description: '',
+	buttonText: '',
+	variantSelectorType: 'dropdown',
+};
 
 /**
  * Fixed Bundle admin builder: a merchant-curated, fixed set of products sold
@@ -296,6 +301,29 @@ const FixedBundleEditor = ( { optionId, setOptionId, setIsListing } ) => {
 								setDisplay( { ...display, buttonText } )
 							}
 						/>
+						{ items.some( ( item ) => item.is_variable ) && (
+							<RadioControl
+								label={ __( 'Variant selector', 'fast-bundle' ) }
+								help={ __(
+									'How shoppers pick a variation for a variable product in this bundle.',
+									'fast-bundle'
+								) }
+								selected={ display.variantSelectorType }
+								options={ [
+									{
+										label: __( 'Dropdown', 'fast-bundle' ),
+										value: 'dropdown',
+									},
+									{
+										label: __( 'Swatches', 'fast-bundle' ),
+										value: 'swatches',
+									},
+								] }
+								onChange={ ( variantSelectorType ) =>
+									setDisplay( { ...display, variantSelectorType } )
+								}
+							/>
+						) }
 					</VStack>
 				</CardBody>
 			</Card>

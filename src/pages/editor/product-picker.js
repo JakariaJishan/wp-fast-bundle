@@ -17,15 +17,35 @@ import { close, plus } from '@wordpress/icons';
  * Shared product picker used by every offer type's builder (Fixed Bundle's
  * items, Buy X Get Y's triggers and rewards, ...): a button opens a modal
  * with a searchable, checkbox-selectable product list; Apply adds every
- * checked product at once. Simple products only for now — variable products
- * are filtered out of the search results.
+ * checked product at once. Variable products are supported — the shopper
+ * picks a specific variation on the storefront later, so the picker only
+ * needs an estimated (cheapest-variation) price for the editor's own totals.
  *
  * @param {Object}   props
- * @param {Array}    props.items       Selected items: `{ product_id, quantity, name, image, price, permalink }`.
+ * @param {Array}    props.items       Selected items: `{ product_id, quantity, name, image, price, permalink, is_variable }`.
  * @param {Function} props.onChange    Called with the next `items` array.
  * @param {string}   [props.label]     Label on the "Add Products" trigger button.
  * @param {string}   [props.emptyText] Shown when `items` is empty.
  */
+
+/**
+ * A variable product's parent has no single price — estimate with the
+ * cheapest available variation, same convention the PHP hydration
+ * (`Fixed_Bundle::get_items()`/`Buy_X_Get_Y::hydrate_items()`) uses for its
+ * own pre-selection display estimate.
+ *
+ * @param {Object} product A `/fbnd/product_search` result row.
+ * @return {number} Estimated unit price.
+ */
+const getDisplayPrice = ( product ) => {
+	if ( product.isVariable ) {
+		const prices = ( product.variation || [] )
+			.map( ( variation ) => parseFloat( variation.sale || variation.regular ) )
+			.filter( ( price ) => ! isNaN( price ) );
+		return prices.length ? Math.min( ...prices ) : 0;
+	}
+	return parseFloat( product.sale || product.regular ) || 0;
+};
 const ProductPicker = ( {
 	items,
 	onChange,
@@ -61,7 +81,7 @@ const ProductPicker = ( {
 		} )
 			.then( ( response ) => {
 				const products = Array.isArray( response ) ? response : [];
-				setResults( products.filter( ( p ) => ! p.isVariable ) );
+				setResults( products );
 			} )
 			.catch( () => {} )
 			.finally( () => setIsSearching( false ) );
@@ -118,8 +138,9 @@ const ProductPicker = ( {
 				quantity: 1,
 				name: product.value,
 				image: product.img,
-				price: product.sale || product.regular || 0,
+				price: getDisplayPrice( product ),
 				permalink: product.url,
+				is_variable: !! product.isVariable,
 			} ) ),
 		] );
 		closeModal();
@@ -183,13 +204,8 @@ const ProductPicker = ( {
 							</HStack>
 						) }
 
-						<div
-							style={ {
-								
-								border: '1px solid #e0e0e0',
-								borderRadius: 4,
-							} }
-						>
+						
+						<VStack>
 							{ isSearching && (
 								<HStack justify="center" style={ { padding: 24 } }>
 									<Spinner />
@@ -230,11 +246,24 @@ const ProductPicker = ( {
 												/>
 											) }
 											<Text>{ product.value }</Text>
+											{ product.isVariable && (
+												<Text
+													variant="muted"
+													size={ 12 }
+													style={ {
+														padding: '2px 6px',
+														borderRadius: 100,
+														background: '#f0f0f0',
+													} }
+												>
+													{ __( 'Variable', 'fast-bundle' ) }
+												</Text>
+											) }
 										</HStack>
 									</HStack>
-									
+
 								) ) }
-						</div>
+						</VStack>
 
 						<HStack justify="space-between">
 							<Text variant="muted">

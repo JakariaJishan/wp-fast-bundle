@@ -76,21 +76,51 @@ class Buy_X_Get_Y_Cart {
 			'fbnd-front-script',
 			'fbndBuyXGetY',
 			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'nonce'   => wp_create_nonce( 'fbnd-nonce' ),
-				'i18n'    => array(
-					'adding'   => __( 'Adding…', 'fast-bundle' ),
-					'added'    => __( 'Deal added to your cart.', 'fast-bundle' ),
-					'viewCart' => __( 'View cart', 'fast-bundle' ),
-					'error'    => __( 'Something went wrong. Please try again.', 'fast-bundle' ),
+				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'fbnd-nonce' ),
+				'currency' => fast_bundle()->get_currency_format(),
+				'i18n'     => array(
+					'adding'        => __( 'Adding…', 'fast-bundle' ),
+					'added'         => __( 'Deal added to your cart.', 'fast-bundle' ),
+					'viewCart'      => __( 'View cart', 'fast-bundle' ),
+					'error'         => __( 'Something went wrong. Please try again.', 'fast-bundle' ),
+					'selectOptions' => __( 'Please select options for all products.', 'fast-bundle' ),
+					/* translators: %s: a `%s` placeholder the JS substitutes with a formatted price. */
+					'youSave'       => __( 'You save %s', 'fast-bundle' ),
+					'free'          => __( 'FREE', 'fast-bundle' ),
 				),
 			)
 		);
 
 		$pricing    = $data['pricing'];
 		$has_saving = $pricing['savings'] > 0;
+
+		// Lets the storefront JS recompute totals live as a shopper resolves
+		// variable items, reusing the same trigger-full-price /
+		// reward-discounted math as `Buy_X_Get_Y::calculate_reward_pricing()`.
+		$to_pricing_items = function ( $items ) {
+			return array_map(
+				function ( $item ) {
+					return array(
+						'product_id' => $item['product_id'],
+						'quantity'   => $item['quantity'],
+						'price'      => $item['price'],
+					);
+				},
+				$items
+			);
+		};
+		$pricing_data     = array(
+			'triggers'       => $to_pricing_items( $data['triggers'] ),
+			'rewards'        => $to_pricing_items( $data['rewards'] ),
+			'rewardDiscount' => $data['rewardDiscount'],
+		);
 		?>
-		<div class="fbnd-bxgy" data-deal-id="<?php echo esc_attr( $deal_id ); ?>">
+		<div
+			class="fbnd-bxgy"
+			data-deal-id="<?php echo esc_attr( $deal_id ); ?>"
+			data-pricing="<?php echo esc_attr( wp_json_encode( $pricing_data ) ); ?>"
+		>
 			<h3 class="fbnd-bxgy__title"><?php echo esc_html( $data['title'] ); ?></h3>
 			<?php if ( ! empty( $data['display']['description'] ) ) : ?>
 				<div class="fbnd-bxgy__desc"><?php echo wp_kses_post( $data['display']['description'] ); ?></div>
@@ -108,6 +138,7 @@ class Buy_X_Get_Y_Cart {
 									<span class="fbnd-bxgy__item-qty">&times;&nbsp;<?php echo esc_html( $item['quantity'] ); ?></span>
 								<?php endif; ?>
 							</span>
+							<?php $this->grouped_cart->render_variation_picker( $item, $data['display']['variantSelectorType'] ); ?>
 						</li>
 					<?php endforeach; ?>
 				</ul>
@@ -126,7 +157,7 @@ class Buy_X_Get_Y_Cart {
 									<span class="fbnd-bxgy__item-qty">&times;&nbsp;<?php echo esc_html( $item['quantity'] ); ?></span>
 								<?php endif; ?>
 							</span>
-							<span class="fbnd-bxgy__item-price">
+							<span class="fbnd-bxgy__item-price" data-product-id="<?php echo esc_attr( $item['product_id'] ); ?>">
 								<?php if ( $reward_price < $item['price'] ) : ?>
 									<span class="fbnd-bxgy__item-price-original"><?php echo wp_kses_post( wc_price( $item['price'] ) ); ?></span>
 								<?php endif; ?>
@@ -136,6 +167,7 @@ class Buy_X_Get_Y_Cart {
 									<?php echo wp_kses_post( wc_price( $reward_price ) ); ?>
 								<?php endif; ?>
 							</span>
+							<?php $this->grouped_cart->render_variation_picker( $item, $data['display']['variantSelectorType'] ); ?>
 						</li>
 					<?php endforeach; ?>
 				</ul>
@@ -143,17 +175,15 @@ class Buy_X_Get_Y_Cart {
 
 			<div class="fbnd-bxgy__summary">
 				<span class="fbnd-bxgy__total"><?php echo wp_kses_post( wc_price( $pricing['total'] ) ); ?></span>
-				<?php if ( $has_saving ) : ?>
-					<span class="fbnd-bxgy__savings">
-						<?php
-						printf(
-							/* translators: %s: amount saved, already formatted as a price */
-							esc_html__( 'You save %s', 'fast-bundle' ),
-							wp_kses_post( wc_price( $pricing['savings'] ) )
-						);
-						?>
-					</span>
-				<?php endif; ?>
+				<span class="fbnd-bxgy__savings" <?php echo $has_saving ? '' : 'hidden'; ?>>
+					<?php
+					printf(
+						/* translators: %s: amount saved, already formatted as a price */
+						esc_html__( 'You save %s', 'fast-bundle' ),
+						wp_kses_post( wc_price( $pricing['savings'] ) )
+					);
+					?>
+				</span>
 			</div>
 
 			<button type="button" class="fbnd-bxgy__button button alt" data-deal-id="<?php echo esc_attr( $deal_id ); ?>">
@@ -179,9 +209,10 @@ class Buy_X_Get_Y_Cart {
 			wp_send_json_error( array( 'message' => __( 'Cart is not available right now.', 'fast-bundle' ) ) );
 		}
 
-		$deal_id = isset( $_POST['deal_id'] ) ? absint( $_POST['deal_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$deal_id    = isset( $_POST['deal_id'] ) ? absint( $_POST['deal_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$selections = $this->grouped_cart->parse_selections( $_POST['selections'] ?? '' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 
-		$data = $this->service->validate_and_price( $deal_id );
+		$data = $this->service->validate_and_price( $deal_id, $selections );
 
 		if ( is_wp_error( $data ) ) {
 			wp_send_json_error( array( 'message' => $data->get_error_message() ) );
@@ -190,16 +221,20 @@ class Buy_X_Get_Y_Cart {
 		$items = array();
 		foreach ( $data['triggers'] as $item ) {
 			$items[] = array(
-				'product_id' => $item['product_id'],
-				'quantity'   => $item['quantity'],
-				'unit_price' => $item['price'],
+				'product_id'   => $item['product_id'],
+				'quantity'     => $item['quantity'],
+				'unit_price'   => $item['price'],
+				'variation_id' => $item['variation_id'] ?? 0,
+				'variation'    => $item['variation'] ?? array(),
 			);
 		}
 		foreach ( $data['rewards'] as $item ) {
 			$items[] = array(
-				'product_id' => $item['product_id'],
-				'quantity'   => $item['quantity'],
-				'unit_price' => $data['pricing']['reward_per_item'][ $item['product_id'] ] ?? $item['price'],
+				'product_id'   => $item['product_id'],
+				'quantity'     => $item['quantity'],
+				'unit_price'   => $data['pricing']['reward_per_item'][ $item['product_id'] ] ?? $item['price'],
+				'variation_id' => $item['variation_id'] ?? 0,
+				'variation'    => $item['variation'] ?? array(),
 			);
 		}
 

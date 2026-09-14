@@ -37,7 +37,8 @@ class Grouped_Offer_Cart {
 	 * key ties them together so they can be priced, labeled, and removed as
 	 * a unit.
 	 *
-	 * @param array  $items    List of `{ product_id, quantity, unit_price }`.
+	 * @param array  $items    List of `{ product_id, quantity, unit_price }`, plus
+	 *                         `variation_id`/`variation` for a resolved variable item.
 	 * @param int    $offer_id The `fbnd_option` post id this group belongs to.
 	 * @param string $label    Human label for cart/order display, e.g. 'Bundle' or 'Deal'.
 	 *
@@ -50,8 +51,8 @@ class Grouped_Offer_Cart {
 			$added = WC()->cart->add_to_cart(
 				$item['product_id'],
 				$item['quantity'],
-				0,
-				array(),
+				$item['variation_id'] ?? 0,
+				$item['variation'] ?? array(),
 				array(
 					'fbnd_group_key'        => $group_key,
 					'fbnd_group_offer_id'   => $offer_id,
@@ -66,6 +67,82 @@ class Grouped_Offer_Cart {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Renders the attribute picker (dropdowns or swatch buttons) for a
+	 * variable item, shared by every offer type's `render_widget()`. Embeds
+	 * the item's purchasable variations as JSON so the storefront JS
+	 * (`variation-selector.js`) can resolve a selection to a variation id
+	 * and price without another round trip.
+	 *
+	 * No-op for a simple item.
+	 *
+	 * @param array  $item          Hydrated item, from a service's `get_items()`/`hydrate_items()`.
+	 * @param string $selector_type 'dropdown' or 'swatches', from the offer's display settings.
+	 * @return void
+	 */
+	public function render_variation_picker( $item, $selector_type ) {
+		if ( empty( $item['is_variable'] ) ) {
+			return;
+		}
+		?>
+		<div
+			class="fbnd-variation-picker fbnd-variation-picker--<?php echo esc_attr( $selector_type ); ?>"
+			data-product-id="<?php echo esc_attr( $item['product_id'] ); ?>"
+			data-variations="<?php echo esc_attr( wp_json_encode( $item['variations'] ) ); ?>"
+		>
+			<?php foreach ( $item['attributes'] as $attribute_key => $attribute ) : ?>
+				<div class="fbnd-variation-picker__attribute" data-attribute="<?php echo esc_attr( $attribute_key ); ?>">
+					<span class="fbnd-variation-picker__attribute-label"><?php echo esc_html( $attribute['label'] ); ?></span>
+					<?php if ( 'swatches' === $selector_type ) : ?>
+						<div class="fbnd-variation-picker__swatches">
+							<?php foreach ( $attribute['options'] as $option ) : ?>
+								<button type="button" class="fbnd-variation-picker__swatch" data-value="<?php echo esc_attr( $option['value'] ); ?>">
+									<?php echo esc_html( $option['label'] ); ?>
+								</button>
+							<?php endforeach; ?>
+						</div>
+					<?php else : ?>
+						<select class="fbnd-variation-picker__select">
+							<option value=""><?php esc_html_e( 'Choose an option', 'fast-bundle' ); ?></option>
+							<?php foreach ( $attribute['options'] as $option ) : ?>
+								<option value="<?php echo esc_attr( $option['value'] ); ?>"><?php echo esc_html( $option['label'] ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					<?php endif; ?>
+				</div>
+			<?php endforeach; ?>
+			<input type="hidden" class="fbnd-variation-picker__variation-id" value="" />
+			<p class="fbnd-variation-picker__unavailable" hidden><?php esc_html_e( 'This combination is unavailable.', 'fast-bundle' ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Decodes and sanitizes the `selections` field every offer type's AJAX
+	 * add-to-cart handler accepts: the shopper's variation picks, sent as a
+	 * JSON object of `{ [product_id]: variation_id }`.
+	 *
+	 * @param string $raw Raw `$_POST['selections']` value (a JSON string), possibly empty.
+	 * @return array Map of `product_id => variation_id`, both ints; malformed input yields an empty array.
+	 */
+	public function parse_selections( $raw ) {
+		if ( ! is_string( $raw ) || '' === $raw ) {
+			return array();
+		}
+
+		$decoded = json_decode( wp_unslash( $raw ), true );
+		if ( ! is_array( $decoded ) ) {
+			return array();
+		}
+
+		$selections = array();
+		foreach ( $decoded as $product_id => $variation_id ) {
+			$selections[ absint( $product_id ) ] = absint( $variation_id );
+		}
+
+		return $selections;
 	}
 
 	/**

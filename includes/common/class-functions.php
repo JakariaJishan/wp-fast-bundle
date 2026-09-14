@@ -1310,6 +1310,164 @@ class Functions {
 	}
 
 	/**
+	 * Hydrates a variable product's selectable attributes and purchasable
+	 * variations, for offer types (Fixed Bundle, Buy X Get Y) that need a
+	 * shopper to pick a variation before the item can be added to cart.
+	 *
+	 * Shared by every offer type's item hydration so each one only merges
+	 * this in rather than re-implementing variation/attribute lookup.
+	 *
+	 * @param \WC_Product $product A variable product (caller checks `is_type( 'variable' )`).
+	 *
+	 * @return array {
+	 *     @type array $attributes Map of attribute key => list of `{ value: slug, label }`.
+	 *     @type array $variations List of `{ variation_id, attributes: [ key => slug ], price, image, in_stock }`,
+	 *                             limited to purchasable, in-stock variations.
+	 * }
+	 */
+	public function hydrate_variable_product_data( \WC_Product $product ) {
+		$attributes  = array();
+		$raw_attrs   = $product->get_variation_attributes();
+		$attribute_taxonomies = wc_get_attribute_taxonomy_names();
+
+		foreach ( $raw_attrs as $attribute_key => $values ) {
+			$is_taxonomy = in_array( $attribute_key, $attribute_taxonomies, true );
+			$options     = array();
+
+			foreach ( $values as $value ) {
+				$label = $value;
+
+				if ( $is_taxonomy ) {
+					$term = get_term_by( 'slug', $value, $attribute_key );
+					if ( $term ) {
+						$label = $term->name;
+					}
+				}
+
+				$options[] = array(
+					'value' => $value,
+					'label' => $label,
+				);
+			}
+
+			$attributes[ $attribute_key ] = array(
+				'label'   => wc_attribute_label( $attribute_key ),
+				'options' => $options,
+			);
+		}
+
+		$variations = array();
+
+		foreach ( $product->get_available_variations() as $variation_data ) {
+			$variation = wc_get_product( $variation_data['variation_id'] );
+
+			if ( ! $variation || ! $variation->is_purchasable() || ! $variation->is_in_stock() ) {
+				continue;
+			}
+
+			$image_id = $variation->get_image_id() ?: $product->get_image_id();
+
+			// `get_available_variations()` keys attributes as `attribute_{key}`,
+			// while `get_variation_attributes()` (used for `$attributes` above)
+			// does not prefix them — normalize so both sides match on the same key.
+			$variation_attributes = array();
+			foreach ( $variation_data['attributes'] as $attr_key => $attr_value ) {
+				$normalized_key                          = preg_replace( '/^attribute_/', '', $attr_key );
+				$variation_attributes[ $normalized_key ] = $attr_value;
+			}
+
+			$variations[] = array(
+				'variation_id' => $variation->get_id(),
+				'attributes'   => $variation_attributes,
+				'price'        => (float) wc_get_price_to_display( $variation ),
+				'image'        => $image_id ? wp_get_attachment_image_url( $image_id, 'thumbnail' ) : wc_placeholder_img_src(),
+				'in_stock'     => true,
+			);
+		}
+
+		return array(
+			'attributes' => $attributes,
+			'variations' => $variations,
+		);
+	}
+
+	/**
+	 * Currency formatting settings for storefront JS that needs to render a
+	 * price client-side (e.g. a live bundle/deal total recalculated as a
+	 * shopper resolves a variable item's variation) without another round
+	 * trip to the server for `wc_price()`.
+	 *
+	 * @return array { symbol, decimals, decimalSeparator, thousandSeparator, position }.
+	 */
+	public function get_currency_format() {
+		return array(
+			'symbol'            => get_woocommerce_currency_symbol(),
+			'decimals'          => wc_get_price_decimals(),
+			'decimalSeparator'  => wc_get_price_decimal_separator(),
+			'thousandSeparator' => wc_get_price_thousand_separator(),
+			'position'          => get_option( 'woocommerce_currency_pos' ),
+		);
+	}
+
+	/**
+	 * Resolves a shopper's variation picks against a hydrated item list
+	 * (from `hydrate_variable_product_data()`-augmented items), overwriting
+	 * each variable item's `price` with its selected variation's live price
+	 * and stamping a `variation_id` onto it. Shared by every offer type's
+	 * `validate_and_price()` so pricing a specific selection and pricing the
+	 * generic (pre-selection) display estimate stay in one place.
+	 *
+	 * Simple (non-variable) items pass through untouched. Called only when
+	 * `$selections` is non-empty (i.e. at add-to-cart time, never for the
+	 * pre-selection storefront render).
+	 *
+	 * @param array $items      Hydrated items, modified in place.
+	 * @param array $selections Map of `product_id => variation_id`, from the shopper.
+	 *
+	 * @return true|\WP_Error True once every variable item resolves, or a WP_Error naming the first that doesn't.
+	 */
+	public function resolve_variation_selections( array &$items, array $selections ) {
+		foreach ( $items as &$item ) {
+			if ( empty( $item['is_variable'] ) ) {
+				continue;
+			}
+
+			$variation_id = isset( $selections[ $item['product_id'] ] ) ? absint( $selections[ $item['product_id'] ] ) : 0;
+			$resolved     = null;
+
+			foreach ( (array) $item['variations'] as $variation ) {
+				if ( (int) $variation['variation_id'] === $variation_id ) {
+					$resolved = $variation;
+					break;
+				}
+			}
+
+			if ( ! $variation_id || ! $resolved ) {
+				return new \WP_Error(
+					'fbnd_missing_selection',
+					/* translators: %s: product name */
+					sprintf( __( 'Please select options for "%s".', 'fast-bundle' ), $item['name'] )
+				);
+			}
+
+			// WC_Cart::add_to_cart() expects variation attributes keyed as
+			// `attribute_{key}`, unlike the unprefixed `attributes` map used
+			// for hydration/matching above.
+			$variation = array();
+			foreach ( $resolved['attributes'] as $attr_key => $attr_value ) {
+				$variation[ 'attribute_' . $attr_key ] = $attr_value;
+			}
+
+			$item['price']        = $resolved['price'];
+			$item['variation_id'] = $resolved['variation_id'];
+			$item['variation']    = $variation;
+		}
+		unset( $item );
+
+		return true;
+	}
+
+	/**
 	 * Retrieves product options from terms (categories, tags, brands).
 	 *
 	 * @param int    $product_id The product ID.

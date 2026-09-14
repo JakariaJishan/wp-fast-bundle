@@ -43,8 +43,14 @@
 
 	&__item {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: 10px;
+
+		.fbnd-variation-picker {
+			flex-basis: 100%;
+			margin-left: 50px; // aligns under the name, past the item image
+		}
 	}
 
 	&__item-image {

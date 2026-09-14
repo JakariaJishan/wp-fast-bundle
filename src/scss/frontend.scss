@@ -3,6 +3,7 @@
 // entry — they all ship in this one stylesheet.
 @use "./frontend/fixed-bundle" as *;
 @use "./frontend/buy-x-get-y" as *;
+@use "./frontend/variation-selector" as *;
 
 /* Variable Style */
 :root {

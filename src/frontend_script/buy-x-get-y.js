@@ -7,6 +7,8 @@
  * from `init.js` alongside every other offer type's handlers.
  */
 
+import { collectSelections } from './variation-selector';
+
 let isBound = false;
 
 /**
@@ -64,6 +66,16 @@ function handleAddToCart( button ) {
 	const i18n = settings.i18n || {};
 	const originalLabel = button.textContent;
 
+	const selections = collectSelections( widget );
+	if ( ! selections ) {
+		setMessage(
+			widget,
+			i18n.selectOptions || 'Please select options for all products.',
+			'error'
+		);
+		return;
+	}
+
 	button.disabled = true;
 	button.textContent = i18n.adding || 'Adding…';
 	setMessage( widget, '', '' );
@@ -72,6 +84,7 @@ function handleAddToCart( button ) {
 	body.set( 'action', 'fbnd_add_buy_x_get_y' );
 	body.set( 'deal_id', dealId );
 	body.set( 'nonce', settings.nonce );
+	body.set( 'selections', JSON.stringify( selections ) );
 
 	fetch( settings.ajaxUrl, {
 		method: 'POST',
@@ -84,9 +97,19 @@ function handleAddToCart( button ) {
 			if ( response && response.success ) {
 				showAdded( widget, response.data && response.data.cart_url );
 
+				// Isolated: a third-party plugin's `added_to_cart`/
+				// `wc_fragment_refresh` handler can throw (e.g. it assumes a
+				// real `form.cart` button context, which this widget isn't).
+				// That must not get miscaught below and reported as our own
+				// add-to-cart failure when it actually succeeded.
 				if ( window.jQuery ) {
-					window.jQuery( document.body ).trigger( 'wc_fragment_refresh' );
-					window.jQuery( document.body ).trigger( 'added_to_cart', [ {}, '', button ] );
+					try {
+						window.jQuery( document.body ).trigger( 'wc_fragment_refresh' );
+						window.jQuery( document.body ).trigger( 'added_to_cart', [ {}, '', button ] );
+					} catch ( error ) {
+						// eslint-disable-next-line no-console
+						console.error( 'fast-bundle: a wc_fragment_refresh/added_to_cart listener threw', error );
+					}
 				}
 			} else {
 				const message = ( response && response.data && response.data.message ) || i18n.error || 'Something went wrong. Please try again.';

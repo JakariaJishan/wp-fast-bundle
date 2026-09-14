@@ -62,9 +62,10 @@ class Buy_X_Get_Y {
 				continue;
 			}
 
-			$image_id = $product->get_image_id();
+			$image_id    = $product->get_image_id();
+			$is_variable = $product->is_type( 'variable' );
 
-			$hydrated[] = array(
+			$hydrated_item = array(
 				'product_id'  => $product_id,
 				'quantity'    => $quantity,
 				'name'        => $product->get_name(),
@@ -73,7 +74,21 @@ class Buy_X_Get_Y {
 				'price'       => (float) wc_get_price_to_display( $product ),
 				'purchasable' => $product->is_purchasable(),
 				'in_stock'    => $product->is_in_stock(),
+				'is_variable' => $is_variable,
 			);
+
+			if ( $is_variable ) {
+				$variable_data = fast_bundle()->hydrate_variable_product_data( $product );
+				$prices        = wp_list_pluck( $variable_data['variations'], 'price' );
+
+				$hydrated_item['attributes'] = $variable_data['attributes'];
+				$hydrated_item['variations'] = $variable_data['variations'];
+				// The parent has no single price — use the cheapest available
+				// variation as a display estimate until a shopper picks one.
+				$hydrated_item['price']      = $prices ? min( $prices ) : 0.0;
+			}
+
+			$hydrated[] = $hydrated_item;
 		}
 
 		return $hydrated;
@@ -136,7 +151,7 @@ class Buy_X_Get_Y {
 	 * Reads a deal's saved display settings.
 	 *
 	 * @param int $deal_id Deal post ID.
-	 * @return array { description: string, buttonText: string }.
+	 * @return array { description: string, buttonText: string, variantSelectorType: dropdown|swatches }.
 	 */
 	public function get_display( $deal_id ) {
 		$content = get_post_meta( $deal_id, 'fbnd_addons_blocks', true );
@@ -146,9 +161,15 @@ class Buy_X_Get_Y {
 
 		$button_text = isset( $display['buttonText'] ) ? sanitize_text_field( $display['buttonText'] ) : '';
 
+		$selector_type = isset( $display['variantSelectorType'] ) ? sanitize_text_field( $display['variantSelectorType'] ) : 'dropdown';
+		if ( ! in_array( $selector_type, array( 'dropdown', 'swatches' ), true ) ) {
+			$selector_type = 'dropdown';
+		}
+
 		return array(
-			'description' => isset( $display['description'] ) ? wp_kses_post( $display['description'] ) : '',
-			'buttonText'  => '' !== $button_text ? $button_text : __( 'Add Deal to Cart', 'fast-bundle' ),
+			'description'         => isset( $display['description'] ) ? wp_kses_post( $display['description'] ) : '',
+			'buttonText'          => '' !== $button_text ? $button_text : __( 'Add Deal to Cart', 'fast-bundle' ),
+			'variantSelectorType' => $selector_type,
 		);
 	}
 
@@ -198,10 +219,13 @@ class Buy_X_Get_Y {
 	 * truth used both to render the storefront widget and to add it to
 	 * cart, so the displayed price and the charged price never drift apart.
 	 *
-	 * @param int $deal_id Deal post ID.
+	 * @param int   $deal_id    Deal post ID.
+	 * @param array $selections Map of `product_id => variation_id`, the shopper's picks for
+	 *                          any variable trigger/reward. Empty when just rendering the
+	 *                          widget — required (and resolved) only when adding to cart.
 	 * @return array|\WP_Error Deal data, or a WP_Error describing why it can't be sold right now.
 	 */
-	public function validate_and_price( $deal_id ) {
+	public function validate_and_price( $deal_id, $selections = array() ) {
 		$deal_id = absint( $deal_id );
 
 		if ( ! $deal_id || 'fbnd_option' !== get_post_type( $deal_id ) || 'publish' !== get_post_status( $deal_id ) ) {
@@ -220,12 +244,28 @@ class Buy_X_Get_Y {
 		}
 
 		foreach ( array_merge( $triggers, $rewards ) as $item ) {
-			if ( ! $item['purchasable'] || ! $item['in_stock'] ) {
+			$available = $item['is_variable']
+				? ! empty( $item['variations'] )
+				: ( $item['purchasable'] && $item['in_stock'] );
+
+			if ( ! $available ) {
 				return new \WP_Error(
 					'fbnd_unavailable_item',
 					/* translators: %s: product name */
 					sprintf( __( '"%s" is currently unavailable.', 'fast-bundle' ), $item['name'] )
 				);
+			}
+		}
+
+		if ( ! empty( $selections ) ) {
+			$resolved = fast_bundle()->resolve_variation_selections( $triggers, $selections );
+			if ( is_wp_error( $resolved ) ) {
+				return $resolved;
+			}
+
+			$resolved = fast_bundle()->resolve_variation_selections( $rewards, $selections );
+			if ( is_wp_error( $resolved ) ) {
+				return $resolved;
 			}
 		}
 

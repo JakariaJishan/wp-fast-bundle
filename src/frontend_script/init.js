@@ -1,6 +1,7 @@
 import { initBuyXGetYActions } from './buy-x-get-y';
 import { initFixedBundleActions } from './fixed-bundle';
 import fbndFrontendState from './state';
+import { initVariationSelectors } from './variation-selector';
 
 /**
  * Main initialization function for the storefront bundle display. Runs each
@@ -15,4 +16,5 @@ export function initFbndActions() {
 
 	initFixedBundleActions();
 	initBuyXGetYActions();
+	initVariationSelectors();
 }

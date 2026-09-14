@@ -7,6 +7,7 @@ import {
 	Card,
 	CardBody,
 	__experimentalHeading as Heading,
+	RadioControl,
 	TextareaControl,
 	TextControl,
 	__experimentalVStack as VStack,
@@ -24,7 +25,11 @@ const OPTION_TYPE = 'buy_x_get_y';
 const HASH_PREFIX = OFFER_TYPES[ OPTION_TYPE ].prefix;
 
 const DEFAULT_REWARD_DISCOUNT = { type: 'free', value: 0 };
-const DEFAULT_DISPLAY = { description: '', buttonText: '' };
+const DEFAULT_DISPLAY = {
+	description: '',
+	buttonText: '',
+	variantSelectorType: 'dropdown',
+};
 
 /**
  * Buy X Get Y admin builder: buy a fixed set of trigger products, get a
@@ -313,6 +318,31 @@ const BuyXGetYEditor = ( { optionId, setOptionId, setIsListing } ) => {
 								setDisplay( { ...display, buttonText } )
 							}
 						/>
+						{ [ ...triggers, ...rewards ].some(
+							( item ) => item.is_variable
+						) && (
+							<RadioControl
+								label={ __( 'Variant selector', 'fast-bundle' ) }
+								help={ __(
+									'How shoppers pick a variation for a variable product in this deal.',
+									'fast-bundle'
+								) }
+								selected={ display.variantSelectorType }
+								options={ [
+									{
+										label: __( 'Dropdown', 'fast-bundle' ),
+										value: 'dropdown',
+									},
+									{
+										label: __( 'Swatches', 'fast-bundle' ),
+										value: 'swatches',
+									},
+								] }
+								onChange={ ( variantSelectorType ) =>
+									setDisplay( { ...display, variantSelectorType } )
+								}
+							/>
+						) }
 					</VStack>
 				</CardBody>
 			</Card>
