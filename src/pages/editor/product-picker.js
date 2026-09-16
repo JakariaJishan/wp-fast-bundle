@@ -40,7 +40,9 @@ import { close, plus } from '@wordpress/icons';
 const getDisplayPrice = ( product ) => {
 	if ( product.isVariable ) {
 		const prices = ( product.variation || [] )
-			.map( ( variation ) => parseFloat( variation.sale || variation.regular ) )
+			.map( ( variation ) =>
+				parseFloat( variation.sale || variation.regular )
+			)
 			.filter( ( price ) => ! isNaN( price ) );
 		return prices.length ? Math.min( ...prices ) : 0;
 	}
@@ -172,7 +174,10 @@ const ProductPicker = ( {
 					<VStack spacing={ 4 }>
 						<TextControl
 							__nextHasNoMarginBottom
-							placeholder={ __( 'Search products…', 'fast-bundle' ) }
+							placeholder={ __(
+								'Search products…',
+								'fast-bundle'
+							) }
 							value={ term }
 							onChange={ setTerm }
 						/>
@@ -190,24 +195,35 @@ const ProductPicker = ( {
 											background: '#f0f0f0',
 										} }
 									>
-										<Text size={ 12 } truncate style={ { maxWidth: 140 } }>
+										<Text
+											size={ 12 }
+											truncate
+											style={ { maxWidth: 140 } }
+										>
 											{ product.value }
 										</Text>
 										<Button
 											icon={ close }
 											size="small"
-											label={ __( 'Unselect', 'fast-bundle' ) }
-											onClick={ () => toggleSelected( product ) }
+											label={ __(
+												'Unselect',
+												'fast-bundle'
+											) }
+											onClick={ () =>
+												toggleSelected( product )
+											}
 										/>
 									</HStack>
 								) ) }
 							</HStack>
 						) }
 
-						
 						<VStack>
 							{ isSearching && (
-								<HStack justify="center" style={ { padding: 24 } }>
+								<HStack
+									justify="center"
+									style={ { padding: 24 } }
+								>
 									<Spinner />
 								</HStack>
 							) }
@@ -216,23 +232,35 @@ const ProductPicker = ( {
 									variant="muted"
 									style={ { display: 'block', padding: 16 } }
 								>
-									{ __( 'No products found.', 'fast-bundle' ) }
+									{ __(
+										'No products found.',
+										'fast-bundle'
+									) }
 								</Text>
 							) }
 							{ ! isSearching &&
 								results.map( ( product ) => (
-									<HStack style={{
-										padding: 8
-									}}>
+									<HStack
+										style={ {
+											padding: 8,
+										} }
+									>
 										<CheckboxControl
 											__nextHasNoMarginBottom
 											key={ product.id }
-											checked={ !! selected[ product.id ] }
-											onChange={ () => toggleSelected( product ) }
+											checked={
+												!! selected[ product.id ]
+											}
+											onChange={ () =>
+												toggleSelected( product )
+											}
 											style={ { padding: '8px 12px' } }
-											
 										/>
-										<HStack spacing={ 2 } align="center" justify="start">
+										<HStack
+											spacing={ 2 }
+											align="center"
+											justify="start"
+										>
 											{ product.img && (
 												<img
 													src={ product.img }
@@ -256,12 +284,14 @@ const ProductPicker = ( {
 														background: '#f0f0f0',
 													} }
 												>
-													{ __( 'Variable', 'fast-bundle' ) }
+													{ __(
+														'Variable',
+														'fast-bundle'
+													) }
 												</Text>
 											) }
 										</HStack>
 									</HStack>
-
 								) ) }
 						</VStack>
 
@@ -274,7 +304,10 @@ const ProductPicker = ( {
 								) }
 							</Text>
 							<HStack expanded={ false } justify="end">
-								<Button variant="tertiary" onClick={ closeModal }>
+								<Button
+									variant="tertiary"
+									onClick={ closeModal }
+								>
 									{ __( 'Cancel', 'fast-bundle' ) }
 								</Button>
 								<Button
@@ -297,7 +330,12 @@ const ProductPicker = ( {
 			{ items.length === 0 ? (
 				<Text variant="muted">{ emptyText }</Text>
 			) : (
-				<VStack spacing={ 2 }>
+				<div
+					style={ {
+						maxHeight: 300,
+						overflowY: 'auto',
+					} }
+				>
 					{ items.map( ( item ) => (
 						<HStack
 							key={ item.product_id }
@@ -307,9 +345,15 @@ const ProductPicker = ( {
 								border: '1px solid #e0e0e0',
 								borderRadius: 4,
 								boxSizing: 'border-box',
+								marginBottom: 8,
 							} }
 						>
-							<HStack spacing={ 2 } alignment="center" justify="start">
+							<HStack
+								spacing={ 2 }
+								alignment="center"
+								justify="start"
+								style={ { minWidth: 0 } }
+							>
 								{ item.image && (
 									<img
 										src={ item.image }
@@ -319,12 +363,18 @@ const ProductPicker = ( {
 											height: 32,
 											objectFit: 'cover',
 											borderRadius: 2,
+											flexShrink: 0,
 										} }
 									/>
 								) }
 								<Text truncate>{ item.name }</Text>
 							</HStack>
-							<HStack spacing={ 2 } expanded={ false } justify="end">
+							<HStack
+								spacing={ 2 }
+								expanded={ false }
+								justify="end"
+								style={ { flexShrink: 0 } }
+							>
 								<input
 									type="number"
 									min="1"
@@ -347,7 +397,7 @@ const ProductPicker = ( {
 							</HStack>
 						</HStack>
 					) ) }
-				</VStack>
+				</div>
 			) }
 		</VStack>
 	);

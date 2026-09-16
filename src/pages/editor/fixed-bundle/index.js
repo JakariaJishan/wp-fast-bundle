@@ -270,6 +270,14 @@ const FixedBundleEditor = ( { optionId, setOptionId, setIsListing } ) => {
 			<Card className="fbnd-card-panel">
 				<CardBody>
 					<VStack spacing={ 3 }>
+						<Heading level={ 4 }>{ __( 'Assign', 'fast-bundle' ) }</Heading>
+						<AssignPanel />
+					</VStack>
+				</CardBody>
+			</Card>
+			<Card className="fbnd-card-panel">
+				<CardBody>
+					<VStack spacing={ 3 }>
 						<Heading level={ 4 }>{ __( 'Pricing', 'fast-bundle' ) }</Heading>
 						<DiscountSettings
 							items={ items }
@@ -328,14 +336,7 @@ const FixedBundleEditor = ( { optionId, setOptionId, setIsListing } ) => {
 				</CardBody>
 			</Card>
 
-			<Card className="fbnd-card-panel">
-				<CardBody>
-					<VStack spacing={ 3 }>
-						<Heading level={ 4 }>{ __( 'Assign', 'fast-bundle' ) }</Heading>
-						<AssignPanel />
-					</VStack>
-				</CardBody>
-			</Card>
+			
 		</OfferEditorShell>
 	);
 };
