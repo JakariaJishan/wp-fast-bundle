@@ -11,6 +11,7 @@
 namespace FBND\Includes\Order;
 
 use FBND\Includes\Services\Buy_X_Get_Y;
+use FBND\Includes\Xpo;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -76,24 +77,26 @@ class Buy_X_Get_Y_Cart {
 			'fbnd-front-script',
 			'fbndBuyXGetY',
 			array(
-				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
-				'nonce'    => wp_create_nonce( 'fbnd-nonce' ),
-				'currency' => fast_bundle()->get_currency_format(),
-				'i18n'     => array(
+				'ajaxUrl'           => admin_url( 'admin-ajax.php' ),
+				'nonce'             => wp_create_nonce( 'fbnd-nonce' ),
+				'currency'          => fast_bundle()->get_currency_format(),
+				'enableSavingsText' => (bool) Xpo::get_fbnd_settings_item( 'enableSavingsText', true ),
+				'i18n'              => array(
 					'adding'        => __( 'Adding…', 'fast-bundle' ),
 					'added'         => __( 'Deal added to your cart.', 'fast-bundle' ),
 					'viewCart'      => __( 'View cart', 'fast-bundle' ),
 					'error'         => __( 'Something went wrong. Please try again.', 'fast-bundle' ),
 					'selectOptions' => __( 'Please select options for all products.', 'fast-bundle' ),
 					/* translators: %s: a `%s` placeholder the JS substitutes with a formatted price. */
-					'youSave'       => __( 'You save %s', 'fast-bundle' ),
-					'free'          => __( 'FREE', 'fast-bundle' ),
+					'youSave'       => Xpo::get_fbnd_settings_item( 'savingsText', __( 'You save %s', 'fast-bundle' ) ),
+					'free'          => Xpo::get_fbnd_settings_item( 'freeRewardText', __( 'FREE', 'fast-bundle' ) ),
 				),
 			)
 		);
 
-		$pricing    = $data['pricing'];
-		$has_saving = $pricing['savings'] > 0;
+		$pricing           = $data['pricing'];
+		$has_saving        = $pricing['savings'] > 0;
+		$show_savings_text = $has_saving && Xpo::get_fbnd_settings_item( 'enableSavingsText', true );
 
 		// Lets the storefront JS recompute totals live as a shopper resolves
 		// variable items, reusing the same trigger-full-price /
@@ -127,7 +130,7 @@ class Buy_X_Get_Y_Cart {
 			<?php endif; ?>
 
 			<div class="fbnd-bxgy__group">
-				<span class="fbnd-bxgy__group-label"><?php esc_html_e( 'Buy', 'fast-bundle' ); ?></span>
+				<span class="fbnd-bxgy__group-label"><?php echo esc_html( Xpo::get_fbnd_settings_item( 'buyGroupLabelText', __( 'Buy', 'fast-bundle' ) ) ); ?></span>
 				<ul class="fbnd-bxgy__items">
 					<?php foreach ( $data['triggers'] as $item ) : ?>
 						<li class="fbnd-bxgy__item">
@@ -145,7 +148,7 @@ class Buy_X_Get_Y_Cart {
 			</div>
 
 			<div class="fbnd-bxgy__group">
-				<span class="fbnd-bxgy__group-label"><?php esc_html_e( 'Get', 'fast-bundle' ); ?></span>
+				<span class="fbnd-bxgy__group-label"><?php echo esc_html( Xpo::get_fbnd_settings_item( 'getGroupLabelText', __( 'Get', 'fast-bundle' ) ) ); ?></span>
 				<ul class="fbnd-bxgy__items">
 					<?php foreach ( $data['rewards'] as $item ) : ?>
 						<?php $reward_price = $pricing['reward_per_item'][ $item['product_id'] ] ?? $item['price']; ?>
@@ -162,7 +165,7 @@ class Buy_X_Get_Y_Cart {
 									<span class="fbnd-bxgy__item-price-original"><?php echo wp_kses_post( wc_price( $item['price'] ) ); ?></span>
 								<?php endif; ?>
 								<?php if ( 0.0 === (float) $reward_price ) : ?>
-									<span class="fbnd-bxgy__item-price-free"><?php esc_html_e( 'FREE', 'fast-bundle' ); ?></span>
+									<span class="fbnd-bxgy__item-price-free"><?php echo esc_html( Xpo::get_fbnd_settings_item( 'freeRewardText', __( 'FREE', 'fast-bundle' ) ) ); ?></span>
 								<?php else : ?>
 									<?php echo wp_kses_post( wc_price( $reward_price ) ); ?>
 								<?php endif; ?>
@@ -175,11 +178,11 @@ class Buy_X_Get_Y_Cart {
 
 			<div class="fbnd-bxgy__summary">
 				<span class="fbnd-bxgy__total"><?php echo wp_kses_post( wc_price( $pricing['total'] ) ); ?></span>
-				<span class="fbnd-bxgy__savings" <?php echo $has_saving ? '' : 'hidden'; ?>>
+				<span class="fbnd-bxgy__savings" <?php echo $show_savings_text ? '' : 'hidden'; ?>>
 					<?php
 					printf(
 						/* translators: %s: amount saved, already formatted as a price */
-						esc_html__( 'You save %s', 'fast-bundle' ),
+						esc_html( Xpo::get_fbnd_settings_item( 'savingsText', __( 'You save %s', 'fast-bundle' ) ) ),
 						wp_kses_post( wc_price( $pricing['savings'] ) )
 					);
 					?>

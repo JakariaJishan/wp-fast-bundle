@@ -7,7 +7,6 @@ import {
 	__experimentalHeading as Heading,
 	__experimentalHStack as HStack,
 	__experimentalInputControl as InputControl,
-	__experimentalNumberControl as NumberControl,
 	__experimentalText as Text,
 	ToggleControl,
 	__experimentalVStack as VStack,
@@ -39,7 +38,6 @@ const Settings = () => {
 				}
 			} )
 			.catch( () => {
-				// setMessage( __( 'Failed to load settings', 'fast-bundle' ) );
 				setToastMessages( {
 					status: 'error',
 					messages: [
@@ -93,11 +91,6 @@ const Settings = () => {
 		} ) );
 	}, [] );
 
-	const sanitizeNumber = ( value ) => {
-		const num = Number( value );
-		return num < 0 ? 0 : num;
-	};
-
 	return (
 		<>
 			<VStack
@@ -132,81 +125,107 @@ const Settings = () => {
 										<VStack spacing={ 1 }>
 											<Heading level={ 3 }>
 												{ __(
-													'Cleanup Upload Field Files',
+													'Fixed Bundle Settings',
 													'fast-bundle'
 												) }
 											</Heading>
 											<Text size={ 14 }>
 												{ __(
-													'Clean up all files uploaded through this field to free storage and remove unused data.',
+													'Control the storefront text shown on Fixed Bundle offers.',
 													'fast-bundle'
 												) }
 											</Text>
 										</VStack>
 										<VStack spacing={ 5 }>
-											<NumberControl
+											<VStack spacing={ 2 }>
+												<ToggleControl
+													checked={
+														settings.enableSavingsText ??
+														true
+													}
+													label={ __(
+														"Show 'You Save' Text",
+														'fast-bundle'
+													) }
+													onChange={ ( value ) =>
+														handleChange(
+															'enableSavingsText',
+															value
+														)
+													}
+												/>
+
+												{ ( settings.enableSavingsText ??
+													true ) && (
+													<InputControl
+														__next40pxDefaultSize
+														value={
+															settings.savingsText ??
+															'You save %s'
+														}
+														onChange={ ( value ) =>
+															handleChange(
+																'savingsText',
+																value
+															)
+														}
+														onKeyDown={ () => {} }
+														onValidate={ () => {} }
+														placeholder="Placeholder"
+														help={ __(
+															"Shown on both Fixed Bundle and Buy X Get Y offers. Use %s where the savings amount should appear.",
+															'fast-bundle'
+														) }
+													/>
+												) }
+											</VStack>
+
+											<InputControl
 												__next40pxDefaultSize
 												label={ __(
-													'Files that are uploaded but not placed in order',
+													'Free Shipping Badge Text',
 													'fast-bundle'
 												) }
+												value={
+													settings.freeShippingBadgeText ??
+													'Free Shipping'
+												}
 												onChange={ ( value ) =>
 													handleChange(
-														'uploadTempRemove',
-														sanitizeNumber( value )
+														'freeShippingBadgeText',
+														value
 													)
 												}
-												min={ 0 }
-												value={
-													settings.uploadTempRemove ??
-													''
-												}
+												onKeyDown={ () => {} }
+												onValidate={ () => {} }
+												placeholder="Placeholder"
 												help={ __(
-													'Removes after a specified number of days.',
+													"Shown when a bundle's discount type is Free Shipping.",
 													'fast-bundle'
 												) }
 											/>
-											<NumberControl
+
+											<InputControl
 												__next40pxDefaultSize
 												label={ __(
-													'Files that are uploaded and placed in order',
+													'Add to Cart Button Text',
 													'fast-bundle'
 												) }
 												value={
-													settings.uploadOrderPlacedRemove ??
-													''
+													settings.fixedBundleButtonText ??
+													'Add Bundle to Cart'
 												}
 												onChange={ ( value ) =>
 													handleChange(
-														'uploadOrderPlacedRemove',
-														sanitizeNumber( value )
+														'fixedBundleButtonText',
+														value
 													)
 												}
-												min={ 0 }
+												onKeyDown={ () => {} }
+												onValidate={ () => {} }
+												placeholder="Placeholder"
 												help={ __(
-													'Removes after a specified number of days.',
-													'fast-bundle'
-												) }
-											/>
-											<NumberControl
-												__next40pxDefaultSize
-												label={ __(
-													'Files that are uploaded and completed in order',
-													'fast-bundle'
-												) }
-												value={
-													settings.uploadOrderCompletedRemove ??
-													''
-												}
-												onChange={ ( value ) =>
-													handleChange(
-														'uploadOrderCompletedRemove',
-														sanitizeNumber( value )
-													)
-												}
-												min={ 0 }
-												help={ __(
-													'Removes after a specified number of days.',
+													"Default button text for Fixed Bundles that don't set their own.",
 													'fast-bundle'
 												) }
 											/>
@@ -217,10 +236,12 @@ const Settings = () => {
 												variant="primary"
 												disabled={
 													savingSection ===
-														'cleanup' || loading
+														'fixed_bundle' ||
+													loading
 												}
 												isBusy={
-													savingSection === 'cleanup'
+													savingSection ===
+													'fixed_bundle'
 												}
 												onClick={ () => {
 													if (
@@ -228,7 +249,9 @@ const Settings = () => {
 															null &&
 														! loading
 													) {
-														handleSave( 'cleanup' );
+														handleSave(
+															'fixed_bundle'
+														);
 													}
 												} }
 											>
@@ -248,237 +271,130 @@ const Settings = () => {
 										<VStack spacing={ 1 }>
 											<Heading level={ 3 }>
 												{ __(
-													'Other Settings',
+													'Buy X Get Y Settings',
 													'fast-bundle'
 												) }
 											</Heading>
 											<Text size={ 14 }>
 												{ __(
-													'Configure the field label along with all related appearance and behavior settings.',
+													'Control the storefront text shown on Buy X Get Y offers.',
 													'fast-bundle'
 												) }
 											</Text>
 										</VStack>
 										<VStack spacing={ 5 }>
-											<VStack spacing={ 2 }>
-												<ToggleControl
-													checked={
-														settings.enableAddonsPriceText ??
-														true
-													}
-													label={
-														'Enable Addons Price Text In Product Page'
-													}
-													onChange={ ( value ) =>
-														handleChange(
-															'enableAddonsPriceText',
-															value
-														)
-													}
-												/>
-
-												{ ( settings.enableAddonsPriceText ??
-													true ) && (
-													<InputControl
-														__next40pxDefaultSize
-														value={
-															settings.addonsPriceText ??
-															'Addons Price'
-														}
-														onChange={ ( value ) =>
-															handleChange(
-																'addonsPriceText',
-																value
-															)
-														}
-														onKeyDown={ () => {} }
-														onValidate={ () => {} }
-														placeholder="Placeholder"
-														help={ __(
-															'Change your Addon Price text here.',
-															'fast-bundle'
-														) }
-													/>
+											<InputControl
+												__next40pxDefaultSize
+												label={ __(
+													'Buy Group Label',
+													'fast-bundle'
 												) }
-											</VStack>
-
-											<VStack spacing={ 2 }>
-												<ToggleControl
-													checked={
-														settings.enableAddonsPriceTotalText ??
-														true
-													}
-													label={
-														'Enable Addons Price Total Text In Product Page'
-													}
-													onChange={ ( value ) =>
-														handleChange(
-															'enableAddonsPriceTotalText',
-															value
-														)
-													}
-												/>
-
-												{ ( settings.enableAddonsPriceTotalText ??
-													true ) && (
-													<InputControl
-														__next40pxDefaultSize
-														value={
-															settings.totalPriceText ??
-															'Total Price'
-														}
-														onChange={ ( value ) =>
-															handleChange(
-																'totalPriceText',
-																value
-															)
-														}
-														onKeyDown={ () => {} }
-														onValidate={ () => {} }
-														placeholder="Placeholder"
-														help={ __(
-															'Change your Total Price text here.',
-															'fast-bundle'
-														) }
-													/>
+												value={
+													settings.buyGroupLabelText ??
+													'Buy'
+												}
+												onChange={ ( value ) =>
+													handleChange(
+														'buyGroupLabelText',
+														value
+													)
+												}
+												onKeyDown={ () => {} }
+												onValidate={ () => {} }
+												placeholder="Placeholder"
+												help={ __(
+													'Label shown above the qualifying (trigger) products.',
+													'fast-bundle'
 												) }
-											</VStack>
-											<VStack spacing={ 2 }>
-												<ToggleControl
-													checked={
-														settings.enableSelectOptionInShop ??
-														true
-													}
-													label={
-														'Enable Select Options In Shop Page Products'
-													}
-													onChange={ ( value ) =>
-														handleChange(
-															'enableSelectOptionInShop',
-															value
-														)
-													}
-												/>
+											/>
 
-												{ ( settings.enableSelectOptionInShop ??
-													true ) && (
-													<InputControl
-														__next40pxDefaultSize
-														value={
-															settings.shopAddToCartText ??
-															'Select Options'
-														}
-														onChange={ ( value ) =>
-															handleChange(
-																'shopAddToCartText',
-																value
-															)
-														}
-														onKeyDown={ () => {} }
-														onValidate={ () => {} }
-														placeholder="Placeholder"
-														help={ __(
-															'Change your shop page Add to Cart text here.',
-															'fast-bundle'
-														) }
-													/>
+											<InputControl
+												__next40pxDefaultSize
+												label={ __(
+													'Get Group Label',
+													'fast-bundle'
 												) }
-											</VStack>
-											<VStack spacing={ 2 }>
-												<InputControl
-													__next40pxDefaultSize
-													label={ __(
-														'Character Text',
-														'fast-bundle'
-													) }
-													value={
-														settings.characterText ??
-														'Character'
-													}
-													onChange={ ( value ) =>
-														handleChange(
-															'characterText',
-															value
-														)
-													}
-													onKeyDown={ () => {} }
-													onValidate={ () => {} }
-													placeholder="Placeholder"
-													help={ __(
-														'Change your character count label text here.',
-														'fast-bundle'
-													) }
-												/>
-											</VStack>
-											<VStack spacing={ 2 }>
-												<InputControl
-													__next40pxDefaultSize
-													label={ __(
-														'Word Text',
-														'fast-bundle'
-													) }
-													value={
-														settings.wordText ??
-														'Word'
-													}
-													onChange={ ( value ) =>
-														handleChange(
-															'wordText',
-															value
-														)
-													}
-													onKeyDown={ () => {} }
-													onValidate={ () => {} }
-													placeholder="Placeholder"
-													help={ __(
-														'Change your word count label text here.',
-														'fast-bundle'
-													) }
-												/>
-											</VStack>
-											<VStack spacing={ 5 }>
-												<ToggleControl
-													checked={
-														settings.hideFieldsInCart ??
-														false
-													}
-													label={
-														'Hide addon fields in Cart Page'
-													}
-													onChange={ ( value ) =>
-														handleChange(
-															'hideFieldsInCart',
-															value
-														)
-													}
-												/>
-												<ToggleControl
-													checked={
-														settings.hideFieldsInCheckout ??
-														false
-													}
-													label={
-														'Hide addon fields in Checkout Page'
-													}
-													onChange={ ( value ) =>
-														handleChange(
-															'hideFieldsInCheckout',
-															value
-														)
-													}
-												/>
-											</VStack>
+												value={
+													settings.getGroupLabelText ??
+													'Get'
+												}
+												onChange={ ( value ) =>
+													handleChange(
+														'getGroupLabelText',
+														value
+													)
+												}
+												onKeyDown={ () => {} }
+												onValidate={ () => {} }
+												placeholder="Placeholder"
+												help={ __(
+													'Label shown above the reward products.',
+													'fast-bundle'
+												) }
+											/>
+
+											<InputControl
+												__next40pxDefaultSize
+												label={ __(
+													'Free Reward Text',
+													'fast-bundle'
+												) }
+												value={
+													settings.freeRewardText ??
+													'FREE'
+												}
+												onChange={ ( value ) =>
+													handleChange(
+														'freeRewardText',
+														value
+													)
+												}
+												onKeyDown={ () => {} }
+												onValidate={ () => {} }
+												placeholder="Placeholder"
+												help={ __(
+													'Shown instead of a price for fully discounted reward products.',
+													'fast-bundle'
+												) }
+											/>
+
+											<InputControl
+												__next40pxDefaultSize
+												label={ __(
+													'Add to Cart Button Text',
+													'fast-bundle'
+												) }
+												value={
+													settings.buyXGetYButtonText ??
+													'Add Deal to Cart'
+												}
+												onChange={ ( value ) =>
+													handleChange(
+														'buyXGetYButtonText',
+														value
+													)
+												}
+												onKeyDown={ () => {} }
+												onValidate={ () => {} }
+												placeholder="Placeholder"
+												help={ __(
+													"Default button text for Buy X Get Y offers that don't set their own.",
+													'fast-bundle'
+												) }
+											/>
 										</VStack>
 										<HStack>
 											<Button
 												__next40pxDefaultSize
 												variant="primary"
 												disabled={
-													savingSection === 'other' ||
+													savingSection ===
+														'buy_x_get_y' ||
 													loading
 												}
 												isBusy={
-													savingSection === 'other'
+													savingSection ===
+													'buy_x_get_y'
 												}
 												onClick={ () => {
 													if (
@@ -486,7 +402,9 @@ const Settings = () => {
 															null &&
 														! loading
 													) {
-														handleSave( 'other' );
+														handleSave(
+															'buy_x_get_y'
+														);
 													}
 												} }
 											>

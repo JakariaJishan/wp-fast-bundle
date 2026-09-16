@@ -71,33 +71,8 @@ const generateDummyData = () => {
 };
 
 const plugins = [
-	{
-		id: 'wow_store',
-		icon: Icons.store,
-		title: __( 'WowStore', 'fast-bundle' ),
-		description: __(
-			'No-code WooCommerce, start to finish!',
-			'fast-bundle'
-		),
-	},
-	{
-		id: 'wow_revenue',
-		icon: Icons.revenue,
-		title: __( 'WowRevenue', 'fast-bundle' ),
-		description: __(
-			'Boost Sales & AOV with Custom Campaigns!',
-			'fast-bundle'
-		),
-	},
-	{
-		id: 'wholesale_x',
-		icon: Icons.wholesale,
-		title: __( 'WholesaleX', 'fast-bundle' ),
-		description: __(
-			'All-in-One B2B Wholesale Solution.',
-			'fast-bundle'
-		),
-	},
+	
+	
 ];
 
 const actionCardsData = {
@@ -276,13 +251,13 @@ const Overview = () => {
 						/>
 						<Heading level={ 2 }>
 							{ __(
-								'Unlock Customizations without Boundaries',
+								'Build Fast, Flexible Product Bundles',
 								'fast-bundle'
 							) }
 						</Heading>
 						<Text size="large">
 							{ __(
-								'Effortlessly add custom product options—text fields, images, swatches, and more!',
+								'Create Fixed Bundles and Buy X Get Y offers, combine products with smart discounts, and boost your average order value!',
 								'fast-bundle'
 							) }
 						</Text>

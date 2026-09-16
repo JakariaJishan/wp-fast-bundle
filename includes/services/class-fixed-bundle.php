@@ -8,6 +8,8 @@
 
 namespace FBND\Includes\Services;
 
+use FBND\Includes\Xpo;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -139,7 +141,7 @@ class Fixed_Bundle {
 
 		return array(
 			'description'         => isset( $display['description'] ) ? wp_kses_post( $display['description'] ) : '',
-			'buttonText'          => '' !== $button_text ? $button_text : __( 'Add Bundle to Cart', 'fast-bundle' ),
+			'buttonText'          => '' !== $button_text ? $button_text : Xpo::get_fbnd_settings_item( 'fixedBundleButtonText', __( 'Add Bundle to Cart', 'fast-bundle' ) ),
 			'variantSelectorType' => $selector_type,
 		);
 	}

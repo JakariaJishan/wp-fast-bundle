@@ -13,6 +13,8 @@
 
 namespace FBND\Includes\Services;
 
+use FBND\Includes\Xpo;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -168,7 +170,7 @@ class Buy_X_Get_Y {
 
 		return array(
 			'description'         => isset( $display['description'] ) ? wp_kses_post( $display['description'] ) : '',
-			'buttonText'          => '' !== $button_text ? $button_text : __( 'Add Deal to Cart', 'fast-bundle' ),
+			'buttonText'          => '' !== $button_text ? $button_text : Xpo::get_fbnd_settings_item( 'buyXGetYButtonText', __( 'Add Deal to Cart', 'fast-bundle' ) ),
 			'variantSelectorType' => $selector_type,
 		);
 	}

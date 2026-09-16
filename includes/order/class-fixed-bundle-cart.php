@@ -11,6 +11,7 @@
 namespace FBND\Includes\Order;
 
 use FBND\Includes\Services\Fixed_Bundle;
+use FBND\Includes\Xpo;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -76,23 +77,25 @@ class Fixed_Bundle_Cart {
 			'fbnd-front-script',
 			'fbndFixedBundle',
 			array(
-				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
-				'nonce'    => wp_create_nonce( 'fbnd-nonce' ),
-				'currency' => fast_bundle()->get_currency_format(),
-				'i18n'     => array(
+				'ajaxUrl'           => admin_url( 'admin-ajax.php' ),
+				'nonce'             => wp_create_nonce( 'fbnd-nonce' ),
+				'currency'          => fast_bundle()->get_currency_format(),
+				'enableSavingsText' => (bool) Xpo::get_fbnd_settings_item( 'enableSavingsText', true ),
+				'i18n'              => array(
 					'adding'        => __( 'Adding…', 'fast-bundle' ),
 					'added'         => __( 'Bundle added to your cart.', 'fast-bundle' ),
 					'viewCart'      => __( 'View cart', 'fast-bundle' ),
 					'error'         => __( 'Something went wrong. Please try again.', 'fast-bundle' ),
 					'selectOptions' => __( 'Please select options for all products.', 'fast-bundle' ),
 					/* translators: %s: a `%s` placeholder the JS substitutes with a formatted price. */
-					'youSave'       => __( 'You save %s', 'fast-bundle' ),
+					'youSave'       => Xpo::get_fbnd_settings_item( 'savingsText', __( 'You save %s', 'fast-bundle' ) ),
 				),
 			)
 		);
 
-		$totals     = $data['totals'];
-		$has_saving = $totals['savings'] > 0;
+		$totals            = $data['totals'];
+		$has_saving        = $totals['savings'] > 0;
+		$show_savings_text = $has_saving && Xpo::get_fbnd_settings_item( 'enableSavingsText', true );
 
 		// Lets the storefront JS recompute totals live as a shopper resolves
 		// variable items, reusing the same proportional-discount math as
@@ -142,11 +145,11 @@ class Fixed_Bundle_Cart {
 					<?php echo wp_kses_post( wc_price( $totals['original_total'] ) ); ?>
 				</span>
 				<span class="fbnd-fixed-bundle__discounted"><?php echo wp_kses_post( wc_price( $totals['discounted_total'] ) ); ?></span>
-				<span class="fbnd-fixed-bundle__savings" <?php echo $has_saving ? '' : 'hidden'; ?>>
+				<span class="fbnd-fixed-bundle__savings" <?php echo $show_savings_text ? '' : 'hidden'; ?>>
 					<?php
 					printf(
 						/* translators: %s: amount saved, already formatted as a price */
-						esc_html__( 'You save %s', 'fast-bundle' ),
+						esc_html( Xpo::get_fbnd_settings_item( 'savingsText', __( 'You save %s', 'fast-bundle' ) ) ),
 						wp_kses_post( wc_price( $totals['savings'] ) )
 					);
 					?>
@@ -155,7 +158,7 @@ class Fixed_Bundle_Cart {
 
 			<?php if ( 'free_shipping' === $data['discount']['type'] ) : ?>
 				<span class="fbnd-fixed-bundle__free-shipping">
-					<?php esc_html_e( 'Free Shipping', 'fast-bundle' ); ?>
+					<?php echo esc_html( Xpo::get_fbnd_settings_item( 'freeShippingBadgeText', __( 'Free Shipping', 'fast-bundle' ) ) ); ?>
 				</span>
 			<?php endif; ?>
 

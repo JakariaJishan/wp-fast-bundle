@@ -211,6 +211,7 @@ function recalcFixedBundleTotals( widget ) {
 
 	const currency = window.fbndFixedBundle?.currency;
 	const i18n = window.fbndFixedBundle?.i18n || {};
+	const showSavingsText = window.fbndFixedBundle?.enableSavingsText !== false;
 
 	const originalTotal = pricing.items.reduce(
 		( sum, item ) => sum + currentItemPrice( widget, item ) * item.quantity,
@@ -250,7 +251,7 @@ function recalcFixedBundleTotals( widget ) {
 			'%s',
 			formatMoney( savings, currency )
 		);
-		savingsEl.hidden = ! hasSaving;
+		savingsEl.hidden = ! hasSaving || ! showSavingsText;
 	}
 }
 
@@ -274,6 +275,7 @@ function recalcBuyXGetYTotals( widget ) {
 
 	const currency = window.fbndBuyXGetY?.currency;
 	const i18n = window.fbndBuyXGetY?.i18n || {};
+	const showSavingsText = window.fbndBuyXGetY?.enableSavingsText !== false;
 
 	const { type = 'free', value = 0 } = pricing.rewardDiscount || {};
 	const numValue = parseFloat( value ) || 0;
@@ -336,7 +338,7 @@ function recalcBuyXGetYTotals( widget ) {
 			'%s',
 			formatMoney( savings, currency )
 		);
-		savingsEl.hidden = ! hasSaving;
+		savingsEl.hidden = ! hasSaving || ! showSavingsText;
 	}
 }
 
