@@ -957,11 +957,17 @@ class RequestApi {
 
 			if ( $product ) {
 				$datas = array(
-					'id'         => $product_id,
-					'url'        => get_permalink( $product_id ),
-					'value'      => rawurldecode( wp_strip_all_tags( $product->get_name() ) ),
-					'img'        => wp_get_attachment_url( $product->get_image_id() ),
-					'isVariable' => $product->is_type( 'variable' ),
+					'id'            => $product_id,
+					'url'           => get_permalink( $product_id ),
+					'value'         => rawurldecode( wp_strip_all_tags( $product->get_name() ) ),
+					'img'           => wp_get_attachment_url( $product->get_image_id() ),
+					'isVariable'    => $product->is_type( 'variable' ),
+					'sku'           => $product->get_sku(),
+					'regular'       => $product->get_regular_price( 'edit' ),
+					'sale'          => $product->get_sale_price( 'edit' ),
+					'stockStatus'   => $product->get_stock_status(),
+					'manageStock'   => $product->managing_stock(),
+					'stockQuantity' => $product->managing_stock() ? $product->get_stock_quantity() : null,
 				);
 
 				if ( $product->is_type( 'variable' ) ) {

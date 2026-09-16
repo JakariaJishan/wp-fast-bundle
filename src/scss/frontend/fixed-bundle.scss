@@ -3,33 +3,115 @@
  *
  * Uses the plugin's `--fbnd-*` design tokens where available, with literal
  * fallbacks so the widget still looks right even if `frontend.scss` (which
- * defines those tokens) hasn't been enqueued on a given page.
+ * defines those tokens) hasn't been enqueued on a given page. `--fbnd-color-accent`
+ * is this widget's own highlight color (border/ribbon) — not one of the
+ * shared tokens, since none of those fit an "accent" role; it has no admin
+ * control yet, so it always falls back to the literal purple.
  */
 
 .fbnd-fixed-bundle {
 	box-sizing: border-box;
+	position: relative;
 	max-width: 480px;
 	margin: 24px 0;
 	padding: 20px;
-	border: 1px solid var(--fbnd-color-border-primary, #d5dad4);
-	border-radius: var(--fbnd-border-radius-md, 4px);
+	border: 2px solid var(--fbnd-color-accent, #7f54b3);
+	border-radius: var(--fbnd-border-radius-md, 8px);
 	background: var(--fbnd-color-base-one, #fff);
 
 	* {
 		box-sizing: border-box;
 	}
 
+	&__ribbon {
+		position: absolute;
+		top: -2px;
+		right: -2px;
+		padding: 4px 10px;
+		font-size: 11px;
+		font-weight: var(--fbnd-font-weight-bold, 700);
+		color: #fff;
+		background: var(--fbnd-color-accent, #7f54b3);
+		border-radius: 0 8px 0 8px;
+	}
+
+	&__header {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		margin-bottom: 4px;
+	}
+
+	&__icon {
+		flex-shrink: 0;
+		width: 20px;
+		height: 20px;
+		margin-top: 2px;
+		background-color: var(--fbnd-color-accent, #7f54b3);
+		-webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2 2 7l10 5 10-5-10-5Z'/><path d='m2 12 10 5 10-5'/><path d='m2 17 10 5 10-5'/></svg>") center / contain no-repeat;
+		mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2 2 7l10 5 10-5-10-5Z'/><path d='m2 12 10 5 10-5'/><path d='m2 17 10 5 10-5'/></svg>") center / contain no-repeat;
+	}
+
+	&__heading {
+		flex: 1;
+		min-width: 0;
+	}
+
 	&__title {
-		margin: 0 0 8px;
+		margin: 0;
 		font-size: 16px;
 		font-weight: var(--fbnd-font-weight-bold, 600);
 		color: var(--fbnd-color-text-dark, #0b0e04);
 	}
 
 	&__desc {
-		margin: 0 0 12px;
+		margin: 8px 0 0;
 		font-size: 13px;
 		color: var(--fbnd-color-text-body, #7c807c);
+	}
+
+	&__strip {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin: 14px 0;
+		padding: 10px;
+		border-radius: var(--fbnd-border-radius-sm, 6px);
+		background: var(--fbnd-color-base-two, #f6f7f7);
+	}
+
+	&__strip-plus {
+		color: var(--fbnd-color-text-body, #7c807c);
+		font-weight: var(--fbnd-font-weight-semi, 500);
+	}
+
+	&__strip-item {
+		position: relative;
+		display: inline-flex;
+
+		img {
+			width: 44px;
+			height: 44px;
+			object-fit: cover;
+			border-radius: var(--fbnd-border-radius-sm, 4px);
+			border: 1px solid var(--fbnd-color-border-light, #e2e9e2);
+		}
+	}
+
+	&__strip-qty {
+		position: absolute;
+		top: -6px;
+		right: -6px;
+		min-width: 16px;
+		padding: 1px 4px;
+		font-size: 10px;
+		font-weight: var(--fbnd-font-weight-bold, 700);
+		line-height: 1.4;
+		text-align: center;
+		color: #fff;
+		background: var(--fbnd-color-text-dark, #1e1e1e);
+		border-radius: 100px;
 	}
 
 	&__items {
@@ -38,28 +120,45 @@
 		padding: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 10px;
 	}
 
 	&__item {
 		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 10px;
+		align-items: flex-start;
+		gap: 8px;
+		padding: 10px 0;
+		border-bottom: 1px solid var(--fbnd-color-border-light, #f0f0f0);
 
-		.fbnd-variation-picker {
-			flex-basis: 100%;
-			margin-left: 50px; // aligns under the name, past the item image
+		&:last-child {
+			border-bottom: none;
+			padding-bottom: 0;
 		}
 	}
 
-	&__item-image {
-		width: 40px;
-		height: 40px;
-		object-fit: cover;
-		border-radius: var(--fbnd-border-radius-sm, 2px);
-		border: 1px solid var(--fbnd-color-border-light, #e2e9e2);
+	&__item-check {
 		flex-shrink: 0;
+		width: 16px;
+		height: 16px;
+		margin-top: 2px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 10px;
+		color: #fff;
+		background: var(--fbnd-color-text-dark, #1e1e1e);
+		border-radius: 3px;
+	}
+
+	&__item-main {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__item-row {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 10px;
 	}
 
 	&__item-name {
@@ -71,12 +170,40 @@
 		color: var(--fbnd-color-text-body, #7c807c);
 	}
 
+	&__item-price {
+		flex-shrink: 0;
+		font-size: 14px;
+		font-weight: var(--fbnd-font-weight-semi, 600);
+		color: var(--fbnd-color-text-dark, #0b0e04);
+		white-space: nowrap;
+	}
+
+	.fbnd-variation-picker {
+		margin-top: 6px;
+	}
+
 	&__summary {
+		margin-bottom: 12px;
+	}
+
+	&__summary-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		margin-bottom: 6px;
+	}
+
+	&__summary-label {
+		font-size: 13px;
+		color: var(--fbnd-color-text-body, #7c807c);
+	}
+
+	&__price-row {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: 8px;
-		margin-bottom: 12px;
 	}
 
 	&__original {
@@ -86,18 +213,27 @@
 	}
 
 	&__discounted {
-		font-size: 18px;
-		font-weight: var(--fbnd-font-weight-bold, 600);
+		font-size: 20px;
+		font-weight: var(--fbnd-font-weight-bold, 700);
 		color: var(--fbnd-color-text-dark, #0b0e04);
 	}
 
 	&__savings {
-		font-size: 12px;
+		display: block;
+		margin-top: 2px;
+		font-size: 13px;
 		font-weight: var(--fbnd-font-weight-semi, 500);
 		color: var(--fbnd-color-primary, #86a62c);
+	}
+
+	&__savings-percent {
+		font-size: 12px;
+		font-weight: var(--fbnd-font-weight-semi, 600);
+		color: var(--fbnd-color-primary, #86a62c);
 		background: var(--fbnd-color-medium, #e8f1d0);
-		border-radius: var(--fbnd-border-radius-sm, 2px);
-		padding: 2px 8px;
+		border-radius: 100px;
+		padding: 3px 10px;
+		white-space: nowrap;
 	}
 
 	&__free-shipping {
@@ -113,6 +249,37 @@
 
 	&__button {
 		width: 100%;
+		background: #1e1e1e;
+		border-color: #1e1e1e;
+		color: #fff;
+
+		&:hover,
+		&:focus {
+			background: #000;
+			border-color: #000;
+			color: #fff;
+		}
+
+		// A `::before` icon survives the JS "Adding…" state swap
+		// (`button.textContent = …`), which only ever touches text nodes.
+		&::before {
+			content: '';
+			display: inline-block;
+			width: 15px;
+			height: 15px;
+			margin-right: 6px;
+			vertical-align: -2px;
+			background-color: currentColor;
+			-webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 6h15l-1.5 9h-12z'/><circle cx='9' cy='20' r='1.5'/><circle cx='18' cy='20' r='1.5'/><path d='M6 6 5 3H2'/></svg>") center / contain no-repeat;
+			mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 6h15l-1.5 9h-12z'/><circle cx='9' cy='20' r='1.5'/><circle cx='18' cy='20' r='1.5'/><path d='M6 6 5 3H2'/></svg>") center / contain no-repeat;
+		}
+	}
+
+	&__microcopy {
+		margin: 8px 0 0;
+		font-size: 11px;
+		text-align: center;
+		color: var(--fbnd-color-text-body, #7c807c);
 	}
 
 	&__message {

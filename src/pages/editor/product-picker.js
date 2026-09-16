@@ -10,22 +10,31 @@ import {
 	__experimentalVStack as VStack,
 } from '@wordpress/components';
 import { useEffect, useRef, useState } from '@wordpress/element';
-import { __, sprintf } from '@wordpress/i18n';
-import { close, plus } from '@wordpress/icons';
+import { __, _n, sprintf } from '@wordpress/i18n';
+import { close, dragHandle, Icon, trash } from '@wordpress/icons';
+
+import { formatPrice } from './format-price';
 
 /**
  * Shared product picker used by every offer type's builder (Fixed Bundle's
- * items, Buy X Get Y's triggers and rewards, ...): a button opens a modal
- * with a searchable, checkbox-selectable product list; Apply adds every
- * checked product at once. Variable products are supported — the shopper
- * picks a specific variation on the storefront later, so the picker only
- * needs an estimated (cheapest-variation) price for the editor's own totals.
+ * items, Buy X Get Y's triggers and rewards, ...): a header shows the item
+ * count and a live catalog subtotal, a search row opens a modal with a
+ * searchable, checkbox-selectable product list, and the picked products are
+ * listed below with their SKU, stock and per-unit price plus a quantity
+ * stepper. Variable products are supported — the shopper picks a specific
+ * variation on the storefront later, so the picker only needs an estimated
+ * (cheapest-variation) price for the editor's own totals.
  *
  * @param {Object}   props
- * @param {Array}    props.items       Selected items: `{ product_id, quantity, name, image, price, permalink, is_variable }`.
- * @param {Function} props.onChange    Called with the next `items` array.
- * @param {string}   [props.label]     Label on the "Add Products" trigger button.
- * @param {string}   [props.emptyText] Shown when `items` is empty.
+ * @param {Array}    props.items             Selected items: `{ product_id, quantity, name, image, price, permalink, is_variable, sku, stockStatus, manageStock, stockQuantity }`.
+ * @param {Function} props.onChange          Called with the next `items` array.
+ * @param {string}   [props.title]           Heading shown above the list, with the item count badge.
+ * @param {string}   [props.description]     Helper text shown under the heading.
+ * @param {string}   [props.label]           Modal title / accessible label for the "Add Products" flow.
+ * @param {string}   [props.addButtonText]   Text on the "Add Product" trigger button.
+ * @param {string}   [props.searchPlaceholder] Placeholder for the inline search row.
+ * @param {string}   [props.emptyText]       Shown when `items` is empty.
+ * @param {string}   [props.totalLabel]      Label for the footer's price total.
  */
 
 /**
@@ -48,14 +57,57 @@ const getDisplayPrice = ( product ) => {
 	}
 	return parseFloat( product.sale || product.regular ) || 0;
 };
+
+/**
+ * Maps a picked item's saved stock fields to display text/color, mirroring
+ * WooCommerce's own stock statuses (`instock`, `outofstock`, `onbackorder`).
+ *
+ * @param {Object} item A selected item.
+ * @return {{text: string, color: string}} What to render for stock state.
+ */
+const getStockDisplay = ( item ) => {
+	if ( item.stockStatus === 'outofstock' ) {
+		return { text: __( 'Out of Stock', 'fast-bundle' ), color: '#cc1818' };
+	}
+	if ( item.stockStatus === 'onbackorder' ) {
+		return { text: __( 'On Backorder', 'fast-bundle' ), color: '#b26200' };
+	}
+	if (
+		item.manageStock &&
+		item.stockQuantity !== null &&
+		item.stockQuantity !== undefined
+	) {
+		return {
+			text: sprintf(
+				/* translators: %d: available stock quantity */
+				__( 'In Stock (%d)', 'fast-bundle' ),
+				item.stockQuantity
+			),
+			color: '#008a00',
+		};
+	}
+	return { text: __( 'In Stock', 'fast-bundle' ), color: '#008a00' };
+};
+
 const ProductPicker = ( {
 	items,
 	onChange,
-	label = __( 'Add products to this bundle', 'fast-bundle' ),
-	emptyText = __(
-		'No products added yet. Click "Add Products" to add the first one.',
+	title,
+	description = __(
+		'Search and add items to sell together. The price and inventory will automatically recalculate.',
 		'fast-bundle'
 	),
+	label = __( 'Add products to this bundle', 'fast-bundle' ),
+	addButtonText = __( 'Add Product', 'fast-bundle' ),
+	searchPlaceholder = __(
+		'Search products by title or SKU to add…',
+		'fast-bundle'
+	),
+	emptyText = __(
+		'No products added yet. Click "Add Product" to add the first one.',
+		'fast-bundle'
+	),
+	totalLabel = __( 'Catalog Subtotal', 'fast-bundle' ),
 } ) => {
 	const [ isModalOpen, setIsModalOpen ] = useState( false );
 	const [ term, setTerm ] = useState( '' );
@@ -63,7 +115,9 @@ const ProductPicker = ( {
 	const [ isSearching, setIsSearching ] = useState( false );
 	// Keyed by product id so re-searching doesn't lose earlier picks.
 	const [ selected, setSelected ] = useState( {} );
+	const [ isReordering, setIsReordering ] = useState( false );
 	const abortRef = useRef();
+	const dragIndexRef = useRef( null );
 
 	const runSearch = ( searchTerm ) => {
 		abortRef.current?.abort();
@@ -143,6 +197,13 @@ const ProductPicker = ( {
 				price: getDisplayPrice( product ),
 				permalink: product.url,
 				is_variable: !! product.isVariable,
+				sku: product.sku || '',
+				stockStatus: product.stockStatus || 'instock',
+				manageStock: !! product.manageStock,
+				stockQuantity:
+					product.stockQuantity === undefined
+						? null
+						: product.stockQuantity,
 			} ) ),
 		] );
 		closeModal();
@@ -162,6 +223,40 @@ const ProductPicker = ( {
 			)
 		);
 	};
+
+	const handleDragStart = ( index ) => ( e ) => {
+		dragIndexRef.current = index;
+		e.dataTransfer.effectAllowed = 'move';
+	};
+
+	const handleDragOver = ( e ) => {
+		e.preventDefault();
+	};
+
+	const handleDrop = ( index ) => ( e ) => {
+		e.preventDefault();
+		const from = dragIndexRef.current;
+		dragIndexRef.current = null;
+		if ( from === null || from === index ) {
+			return;
+		}
+		const next = [ ...items ];
+		const [ moved ] = next.splice( from, 1 );
+		next.splice( index, 0, moved );
+		onChange( next );
+	};
+
+	const totalUnits = items.reduce(
+		( sum, item ) => sum + ( parseInt( item.quantity, 10 ) || 0 ),
+		0
+	);
+	const catalogSubtotal = items.reduce(
+		( sum, item ) =>
+			sum +
+			( parseFloat( item.price ) || 0 ) *
+				( parseInt( item.quantity, 10 ) || 0 ),
+		0
+	);
 
 	return (
 		<VStack spacing={ 3 }>
@@ -241,13 +336,13 @@ const ProductPicker = ( {
 							{ ! isSearching &&
 								results.map( ( product ) => (
 									<HStack
+										key={ product.id }
 										style={ {
 											padding: 8,
 										} }
 									>
 										<CheckboxControl
 											__nextHasNoMarginBottom
-											key={ product.id }
 											checked={
 												!! selected[ product.id ]
 											}
@@ -274,6 +369,19 @@ const ProductPicker = ( {
 												/>
 											) }
 											<Text>{ product.value }</Text>
+											{ product.sku && (
+												<Text
+													variant="muted"
+													size={ 12 }
+													style={ {
+														padding: '2px 6px',
+														borderRadius: 4,
+														background: '#f0f0f0',
+													} }
+												>
+													{ product.sku }
+												</Text>
+											) }
 											{ product.isVariable && (
 												<Text
 													variant="muted"
@@ -323,81 +431,314 @@ const ProductPicker = ( {
 				</Modal>
 			) }
 
-			<Button variant="secondary" icon={ plus } onClick={ openModal }>
-				{ label }
-			</Button>
+			<HStack justify="space-between" alignment="center">
+				<HStack expanded={ false } spacing={ 2 } alignment="center">
+					{ title && (
+						<Text weight={ 600 } size={ 15 }>
+							{ title }
+						</Text>
+					) }
+					<Text
+						size={ 12 }
+						style={ {
+							padding: '2px 10px',
+							borderRadius: 100,
+							background: '#f0f0f0',
+							color: '#555',
+							fontWeight: 500,
+						} }
+					>
+						{ sprintf(
+							/* translators: %d: number of items in the list */
+							_n( '%d Item', '%d Items', items.length, 'fast-bundle' ),
+							items.length
+						) }
+					</Text>
+				</HStack>
+				{ items.length > 1 && (
+					<Button
+						variant="link"
+						onClick={ () => setIsReordering( ( prev ) => ! prev ) }
+					>
+						{ isReordering
+							? __( 'Done', 'fast-bundle' )
+							: __( 'Reorder', 'fast-bundle' ) }
+					</Button>
+				) }
+			</HStack>
+
+			{ description && (
+				<Text variant="muted" size={ 13 }>
+					{ description }
+				</Text>
+			) }
+
+			<HStack spacing={ 2 } alignment="flex-start">
+				<div style={ { flex: 1 } }>
+					<TextControl
+						__nextHasNoMarginBottom
+						placeholder={ searchPlaceholder }
+						value=""
+						readOnly
+						onFocus={ openModal }
+						onClick={ openModal }
+					/>
+				</div>
+				<Button
+					variant="secondary"
+					onClick={ openModal }
+					style={ { flexShrink: 0 } }
+				>
+					{ addButtonText }
+				</Button>
+			</HStack>
 
 			{ items.length === 0 ? (
 				<Text variant="muted">{ emptyText }</Text>
 			) : (
 				<div
 					style={ {
-						maxHeight: 300,
+						border: '1px solid #e0e0e0',
+						borderRadius: 4,
+						maxHeight: 360,
 						overflowY: 'auto',
 					} }
 				>
-					{ items.map( ( item ) => (
-						<HStack
-							key={ item.product_id }
-							justify="space-between"
-							style={ {
-								padding: '8px 12px',
-								border: '1px solid #e0e0e0',
-								borderRadius: 4,
-								boxSizing: 'border-box',
-								marginBottom: 8,
-							} }
-						>
-							<HStack
-								spacing={ 2 }
-								alignment="center"
-								justify="start"
-								style={ { minWidth: 0 } }
+					{ items.map( ( item, index ) => {
+						const stockDisplay = getStockDisplay( item );
+						return (
+							<div
+								key={ item.product_id }
+								draggable={ isReordering }
+								onDragStart={ handleDragStart( index ) }
+								onDragOver={ handleDragOver }
+								onDrop={ handleDrop( index ) }
+								style={ {
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'space-between',
+									gap: 12,
+									padding: '12px',
+									borderBottom:
+										index < items.length - 1
+											? '1px solid #e5e5e5'
+											: 'none',
+									background: '#fff',
+								} }
 							>
-								{ item.image && (
-									<img
-										src={ item.image }
-										alt=""
+								<HStack
+									spacing={ 3 }
+									alignment="center"
+									justify="start"
+									style={ { minWidth: 0 } }
+								>
+									{ isReordering && (
+										<Icon
+											icon={ dragHandle }
+											size={ 18 }
+											style={ {
+												flexShrink: 0,
+												color: '#949494',
+												cursor: 'grab',
+											} }
+										/>
+									) }
+									{ item.image && (
+										<img
+											src={ item.image }
+											alt=""
+											style={ {
+												width: 48,
+												height: 48,
+												objectFit: 'cover',
+												borderRadius: 4,
+												border: '1px solid #e0e0e0',
+												flexShrink: 0,
+											} }
+										/>
+									) }
+									<VStack spacing={ 0 } style={ { minWidth: 0 } }>
+										<HStack
+											spacing={ 2 }
+											alignment="center"
+											justify="start"
+										>
+											<Text weight={ 600 } truncate>
+												{ item.name }
+											</Text>
+											{ item.sku && (
+												<Text
+													size={ 11 }
+													style={ {
+														padding: '2px 6px',
+														borderRadius: 4,
+														background: '#f0f0f0',
+														color: '#555',
+														flexShrink: 0,
+														whiteSpace: 'nowrap',
+													} }
+												>
+													{ item.sku }
+												</Text>
+											) }
+										</HStack>
+										<HStack
+											spacing={ 1 }
+											alignment="center"
+											justify="start"
+										>
+											<Text variant="muted" size={ 12 }>
+												{ sprintf(
+													/* translators: %s: formatted unit price */
+													__( '%s / unit', 'fast-bundle' ),
+													formatPrice( item.price )
+												) }
+											</Text>
+											<Text variant="muted" size={ 12 }>
+												•
+											</Text>
+											<Text
+												size={ 12 }
+												style={ {
+													color: stockDisplay.color,
+													fontWeight: 500,
+												} }
+											>
+												{ stockDisplay.text }
+											</Text>
+										</HStack>
+									</VStack>
+								</HStack>
+
+								<HStack
+									spacing={ 3 }
+									expanded={ false }
+									justify="end"
+									style={ { flexShrink: 0 } }
+								>
+									<HStack
+										spacing={ 0 }
+										expanded={ false }
 										style={ {
-											width: 32,
-											height: 32,
-											objectFit: 'cover',
-											borderRadius: 2,
-											flexShrink: 0,
+											border: '1px solid #ddd',
+											borderRadius: 4,
+											overflow: 'hidden',
 										} }
+									>
+										<button
+											type="button"
+											onClick={ () =>
+												setQuantity(
+													item.product_id,
+													item.quantity - 1
+												)
+											}
+											disabled={ item.quantity <= 1 }
+											style={ {
+												width: 28,
+												height: 30,
+												border: 'none',
+												borderRight: '1px solid #ddd',
+												background: '#f6f7f7',
+												cursor:
+													item.quantity <= 1
+														? 'not-allowed'
+														: 'pointer',
+											} }
+										>
+											−
+										</button>
+										<input
+											type="number"
+											min="1"
+											value={ item.quantity }
+											onChange={ ( e ) =>
+												setQuantity(
+													item.product_id,
+													e.target.value
+												)
+											}
+											style={ {
+												width: 36,
+												height: 30,
+												textAlign: 'center',
+												border: 'none',
+												outline: 'none',
+												fontWeight: 600,
+											} }
+										/>
+										<button
+											type="button"
+											onClick={ () =>
+												setQuantity(
+													item.product_id,
+													item.quantity + 1
+												)
+											}
+											style={ {
+												width: 28,
+												height: 30,
+												border: 'none',
+												borderLeft: '1px solid #ddd',
+												background: '#f6f7f7',
+												cursor: 'pointer',
+											} }
+										>
+											+
+										</button>
+									</HStack>
+									<Text
+										weight={ 600 }
+										style={ {
+											minWidth: 64,
+											textAlign: 'right',
+										} }
+									>
+										{ formatPrice(
+											( parseFloat( item.price ) || 0 ) *
+												item.quantity
+										) }
+									</Text>
+									<Button
+										icon={ trash }
+										label={ __( 'Remove', 'fast-bundle' ) }
+										onClick={ () =>
+											removeItem( item.product_id )
+										}
 									/>
-								) }
-								<Text truncate>{ item.name }</Text>
-							</HStack>
-							<HStack
-								spacing={ 2 }
-								expanded={ false }
-								justify="end"
-								style={ { flexShrink: 0 } }
-							>
-								<input
-									type="number"
-									min="1"
-									value={ item.quantity }
-									onChange={ ( e ) =>
-										setQuantity(
-											item.product_id,
-											e.target.value
-										)
-									}
-									style={ { width: 90, height: 30 } }
-								/>
-								<Button
-									icon={ close }
-									label={ __( 'Remove', 'fast-bundle' ) }
-									onClick={ () =>
-										removeItem( item.product_id )
-									}
-								/>
-							</HStack>
-						</HStack>
-					) ) }
+								</HStack>
+							</div>
+						);
+					} ) }
 				</div>
+			) }
+
+			{ items.length > 0 && (
+				<HStack
+					justify="space-between"
+					style={ {
+						paddingTop: 10,
+						borderTop: '1px solid #e0e0e0',
+					} }
+				>
+					<Text variant="muted" size={ 13 }>
+						{ sprintf(
+							/* translators: 1: total unit count 2: total product count */
+							__(
+								'Items Total: %1$d units (%2$d products)',
+								'fast-bundle'
+							),
+							totalUnits,
+							items.length
+						) }
+					</Text>
+					<HStack expanded={ false } spacing={ 1 } justify="end">
+						<Text size={ 13 }>{ totalLabel }:</Text>
+						<Text size={ 13 } weight={ 600 }>
+							{ formatPrice( catalogSubtotal ) }
+						</Text>
+					</HStack>
+				</HStack>
 			) }
 		</VStack>
 	);

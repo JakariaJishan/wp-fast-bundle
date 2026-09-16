@@ -213,6 +213,18 @@ function recalcFixedBundleTotals( widget ) {
 	const i18n = window.fbndFixedBundle?.i18n || {};
 	const showSavingsText = window.fbndFixedBundle?.enableSavingsText !== false;
 
+	pricing.items.forEach( ( item ) => {
+		const priceEl = widget.querySelector(
+			`.fbnd-fixed-bundle__item-price[data-product-id="${ item.product_id }"]`
+		);
+		if ( priceEl ) {
+			priceEl.innerHTML = formatMoney(
+				currentItemPrice( widget, item ) * item.quantity,
+				currency
+			);
+		}
+	} );
+
 	const originalTotal = pricing.items.reduce(
 		( sum, item ) => sum + currentItemPrice( widget, item ) * item.quantity,
 		0
@@ -234,10 +246,13 @@ function recalcFixedBundleTotals( widget ) {
 
 	const savings = Math.max( 0, originalTotal - discountedTotal );
 	const hasSaving = savings > 0;
+	const savingsPercent = originalTotal > 0 ? ( savings / originalTotal ) * 100 : 0;
 
 	const originalEl = widget.querySelector( '.fbnd-fixed-bundle__original' );
 	const discountedEl = widget.querySelector( '.fbnd-fixed-bundle__discounted' );
 	const savingsEl = widget.querySelector( '.fbnd-fixed-bundle__savings' );
+	const ribbonEl = widget.querySelector( '.fbnd-fixed-bundle__ribbon' );
+	const percentEl = widget.querySelector( '.fbnd-fixed-bundle__savings-percent' );
 
 	if ( discountedEl ) {
 		discountedEl.innerHTML = formatMoney( discountedTotal, currency );
@@ -252,6 +267,20 @@ function recalcFixedBundleTotals( widget ) {
 			formatMoney( savings, currency )
 		);
 		savingsEl.hidden = ! hasSaving || ! showSavingsText;
+	}
+	if ( ribbonEl ) {
+		ribbonEl.innerHTML = ( i18n.save || 'SAVE %s' ).replace(
+			'%s',
+			formatMoney( savings, currency )
+		);
+		ribbonEl.hidden = ! hasSaving;
+	}
+	if ( percentEl ) {
+		percentEl.innerHTML = ( i18n.instantSavings || 'Instant %s% Savings' ).replace(
+			'%s',
+			Math.round( savingsPercent )
+		);
+		percentEl.hidden = ! hasSaving;
 	}
 }
 
@@ -286,6 +315,7 @@ function recalcBuyXGetYTotals( widget ) {
 	} );
 
 	let rewardTotal = 0;
+	let rewardOriginalTotal = 0;
 	let savings = 0;
 
 	pricing.rewards.forEach( ( item ) => {
@@ -301,6 +331,7 @@ function recalcBuyXGetYTotals( widget ) {
 		}
 
 		rewardTotal += rewardPrice * item.quantity;
+		rewardOriginalTotal += price * item.quantity;
 		savings += ( price - rewardPrice ) * item.quantity;
 
 		const priceEl = widget.querySelector(
@@ -310,7 +341,7 @@ function recalcBuyXGetYTotals( widget ) {
 			const originalMarkup =
 				rewardPrice < price
 					? `<span class="fbnd-bxgy__item-price-original">${ formatMoney(
-							price,
+							price * item.quantity,
 							currency
 					  ) }</span>`
 					: '';
@@ -319,27 +350,62 @@ function recalcBuyXGetYTotals( widget ) {
 					? `<span class="fbnd-bxgy__item-price-free">${
 							i18n.free || 'FREE'
 					  }</span>`
-					: formatMoney( rewardPrice, currency );
+					: formatMoney( rewardPrice * item.quantity, currency );
 			priceEl.innerHTML = originalMarkup + priceMarkup;
+		}
+	} );
+
+	pricing.triggers.forEach( ( item ) => {
+		const priceEl = widget.querySelector(
+			`.fbnd-bxgy__item-price[data-product-id="${ item.product_id }"]`
+		);
+		if ( priceEl ) {
+			priceEl.innerHTML = formatMoney(
+				currentItemPrice( widget, item ) * item.quantity,
+				currency
+			);
 		}
 	} );
 
 	savings = Math.max( 0, savings );
 	const hasSaving = savings > 0;
+	const total = triggerTotal + rewardTotal;
+	const originalTotal = total + savings;
 
 	const totalEl = widget.querySelector( '.fbnd-bxgy__total' );
-	const savingsEl = widget.querySelector( '.fbnd-bxgy__savings' );
+	const originalEl = widget.querySelector( '.fbnd-bxgy__original' );
+	const savedBadgeEl = widget.querySelector( '.fbnd-bxgy__saved-badge' );
+	const rewardTotalEl = widget.querySelector( '.fbnd-bxgy__reward-total' );
 
 	if ( totalEl ) {
-		totalEl.innerHTML = formatMoney( triggerTotal + rewardTotal, currency );
+		totalEl.innerHTML = formatMoney( total, currency );
 	}
-	if ( savingsEl ) {
-		savingsEl.innerHTML = ( i18n.youSave || 'You save %s' ).replace(
+	if ( originalEl ) {
+		originalEl.innerHTML = formatMoney( originalTotal, currency );
+		originalEl.hidden = ! hasSaving;
+	}
+	if ( savedBadgeEl ) {
+		savedBadgeEl.innerHTML = ( i18n.saved || 'Saved %s' ).replace(
 			'%s',
 			formatMoney( savings, currency )
 		);
-		savingsEl.hidden = ! hasSaving || ! showSavingsText;
+		savedBadgeEl.hidden = ! hasSaving || ! showSavingsText;
 	}
+	if ( rewardTotalEl ) {
+		const originalMarkup =
+			rewardTotal < rewardOriginalTotal
+				? `<span class="fbnd-bxgy__reward-total-original">${ formatMoney(
+						rewardOriginalTotal,
+						currency
+				  ) }</span>`
+				: '';
+		rewardTotalEl.innerHTML = formatMoney( rewardTotal, currency ) + originalMarkup;
+	}
+
+	// The headline/badge/subtitle phrases (e.g. "Buy 2 Get 1 AT 50% OFF")
+	// only depend on quantities and the deal's configured discount — never
+	// on which specific variation a shopper picks — so they're left as
+	// server-rendered and never touched here.
 }
 
 /**

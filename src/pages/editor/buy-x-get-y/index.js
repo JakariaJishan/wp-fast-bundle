@@ -245,49 +245,49 @@ const BuyXGetYEditor = ( { optionId, setOptionId, setIsListing } ) => {
 					rewards={ rewards }
 					rewardDiscount={ rewardDiscount }
 					display={ display }
+					status={ status }
 				/>
 			}
 		>
 			<Card className="fbnd-card-panel">
 				<CardBody>
-					<VStack spacing={ 3 }>
-						<Heading level={ 4 }>
-							{ __( 'Buy (trigger products)', 'fast-bundle' ) }
-						</Heading>
-						<ProductPicker
-							items={ triggers }
-							onChange={ setTriggers }
-							label={ __(
-								'Add products the customer needs to buy',
-								'fast-bundle'
-							) }
-							emptyText={ __(
-								'No trigger products yet. Search above to add the first one.',
-								'fast-bundle'
-							) }
-						/>
-					</VStack>
+					<ProductPicker
+						items={ triggers }
+						onChange={ setTriggers }
+						title={ __( 'Buy (trigger products)', 'fast-bundle' ) }
+						description={ __(
+							'Search and add the products a customer needs to buy to unlock this deal.',
+							'fast-bundle'
+						) }
+						label={ __(
+							'Add products the customer needs to buy',
+							'fast-bundle'
+						) }
+						emptyText={ __(
+							'No trigger products yet. Search above to add the first one.',
+							'fast-bundle'
+						) }
+					/>
+				</CardBody>
+			</Card>
+
+			<Card className="fbnd-card-panel">
+				<CardBody>
+					<AssignPanel />
 				</CardBody>
 			</Card>
 
 			<Card className="fbnd-card-panel">
 				<CardBody>
 					<VStack spacing={ 3 }>
-						<Heading level={ 4 }>{ __( 'Assign', 'fast-bundle' ) }</Heading>
-						<AssignPanel />
-					</VStack>
-				</CardBody>
-			</Card>
-
-			<Card className="fbnd-card-panel">
-				<CardBody>
-					<VStack spacing={ 3 }>
-						<Heading level={ 4 }>
-							{ __( 'Get (reward products)', 'fast-bundle' ) }
-						</Heading>
 						<ProductPicker
 							items={ rewards }
 							onChange={ setRewards }
+							title={ __( 'Get (reward products)', 'fast-bundle' ) }
+							description={ __(
+								'Search and add the products a customer gets free/discounted with this deal.',
+								'fast-bundle'
+							) }
 							label={ __(
 								'Add products the customer gets free/discounted',
 								'fast-bundle'

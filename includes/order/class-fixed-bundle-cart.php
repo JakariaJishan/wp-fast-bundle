@@ -89,6 +89,10 @@ class Fixed_Bundle_Cart {
 					'selectOptions' => __( 'Please select options for all products.', 'fast-bundle' ),
 					/* translators: %s: a `%s` placeholder the JS substitutes with a formatted price. */
 					'youSave'       => Xpo::get_fbnd_settings_item( 'savingsText', __( 'You save %s', 'fast-bundle' ) ),
+					/* translators: %s: a `%s` placeholder the JS substitutes with a formatted price. */
+					'save'          => __( 'SAVE %s', 'fast-bundle' ),
+					/* translators: %s: a `%s` placeholder the JS substitutes with a rounded savings percentage. */
+					'instantSavings' => __( 'Instant %s% Savings', 'fast-bundle' ),
 				),
 			)
 		);
@@ -96,6 +100,7 @@ class Fixed_Bundle_Cart {
 		$totals            = $data['totals'];
 		$has_saving        = $totals['savings'] > 0;
 		$show_savings_text = $has_saving && Xpo::get_fbnd_settings_item( 'enableSavingsText', true );
+		$savings_percent   = $totals['original_total'] > 0 ? ( $totals['savings'] / $totals['original_total'] ) * 100 : 0;
 
 		// Lets the storefront JS recompute totals live as a shopper resolves
 		// variable items, reusing the same proportional-discount math as
@@ -119,41 +124,96 @@ class Fixed_Bundle_Cart {
 			data-bundle-id="<?php echo esc_attr( $bundle_id ); ?>"
 			data-pricing="<?php echo esc_attr( wp_json_encode( $pricing_data ) ); ?>"
 		>
+			<?php if ( $has_saving ) : ?>
+				<span class="fbnd-fixed-bundle__ribbon">
+					<?php
+					printf(
+						/* translators: %s: amount saved, already formatted as a price */
+						esc_html__( 'SAVE %s', 'fast-bundle' ),
+						wp_kses_post( wc_price( $totals['savings'] ) )
+					);
+					?>
+				</span>
+			<?php endif; ?>
 
-			<h3 class="fbnd-fixed-bundle__title"><?php echo esc_html( $data['title'] ); ?></h3>
+			<div class="fbnd-fixed-bundle__header">
+				<span class="fbnd-fixed-bundle__icon" aria-hidden="true"></span>
+				<div class="fbnd-fixed-bundle__heading">
+					<h3 class="fbnd-fixed-bundle__title"><?php echo esc_html( $data['title'] ); ?></h3>
+					<p class="fbnd-fixed-bundle__savings" <?php echo $show_savings_text ? '' : 'hidden'; ?>>
+						<?php
+						printf(
+							/* translators: %s: amount saved, already formatted as a price */
+							esc_html( Xpo::get_fbnd_settings_item( 'savingsText', __( 'You save %s', 'fast-bundle' ) ) ),
+							wp_kses_post( wc_price( $totals['savings'] ) )
+						);
+						?>
+					</p>
+				</div>
+			</div>
+
 			<?php if ( ! empty( $data['display']['description'] ) ) : ?>
 				<div class="fbnd-fixed-bundle__desc"><?php echo wp_kses_post( $data['display']['description'] ); ?></div>
 			<?php endif; ?>
 
+			<div class="fbnd-fixed-bundle__strip">
+				<?php foreach ( $data['items'] as $index => $item ) : ?>
+					<?php if ( $index > 0 ) : ?>
+						<span class="fbnd-fixed-bundle__strip-plus" aria-hidden="true">+</span>
+					<?php endif; ?>
+					<span class="fbnd-fixed-bundle__strip-item">
+						<img src="<?php echo esc_url( $item['image'] ); ?>" alt="<?php echo esc_attr( $item['name'] ); ?>" />
+						<?php if ( $item['quantity'] > 1 ) : ?>
+							<span class="fbnd-fixed-bundle__strip-qty"><?php echo esc_html( $item['quantity'] ); ?>&times;</span>
+						<?php endif; ?>
+					</span>
+				<?php endforeach; ?>
+			</div>
+
 			<ul class="fbnd-fixed-bundle__items">
-				<?php foreach ( $data['items'] as $item ) : ?>
+				<?php foreach ( $data['items'] as $index => $item ) : ?>
 					<li class="fbnd-fixed-bundle__item">
-						<img class="fbnd-fixed-bundle__item-image" src="<?php echo esc_url( $item['image'] ); ?>" alt="<?php echo esc_attr( $item['name'] ); ?>" />
-						<span class="fbnd-fixed-bundle__item-name">
-							<?php echo esc_html( $item['name'] ); ?>
-							<?php if ( $item['quantity'] > 1 ) : ?>
-								<span class="fbnd-fixed-bundle__item-qty">&times;&nbsp;<?php echo esc_html( $item['quantity'] ); ?></span>
-							<?php endif; ?>
-						</span>
-						<?php $this->grouped_cart->render_variation_picker( $item, $data['display']['variantSelectorType'] ); ?>
+						<span class="fbnd-fixed-bundle__item-check" aria-hidden="true">✓</span>
+						<div class="fbnd-fixed-bundle__item-main">
+							<div class="fbnd-fixed-bundle__item-row">
+								<span class="fbnd-fixed-bundle__item-name">
+									<?php if ( 0 === $index ) : ?>
+										<?php esc_html_e( 'This item:', 'fast-bundle' ); ?>
+									<?php endif; ?>
+									<?php echo esc_html( $item['name'] ); ?>
+									<?php if ( $item['quantity'] > 1 ) : ?>
+										<span class="fbnd-fixed-bundle__item-qty">(<?php echo esc_html( $item['quantity'] ); ?>&times;)</span>
+									<?php endif; ?>
+								</span>
+								<span class="fbnd-fixed-bundle__item-price" data-product-id="<?php echo esc_attr( $item['product_id'] ); ?>">
+									<?php echo wp_kses_post( wc_price( $item['price'] * $item['quantity'] ) ); ?>
+								</span>
+							</div>
+							<?php $this->grouped_cart->render_variation_picker( $item, $data['display']['variantSelectorType'] ); ?>
+						</div>
 					</li>
 				<?php endforeach; ?>
 			</ul>
 
 			<div class="fbnd-fixed-bundle__summary">
-				<span class="fbnd-fixed-bundle__original" <?php echo $has_saving ? '' : 'hidden'; ?>>
-					<?php echo wp_kses_post( wc_price( $totals['original_total'] ) ); ?>
-				</span>
-				<span class="fbnd-fixed-bundle__discounted"><?php echo wp_kses_post( wc_price( $totals['discounted_total'] ) ); ?></span>
-				<span class="fbnd-fixed-bundle__savings" <?php echo $show_savings_text ? '' : 'hidden'; ?>>
-					<?php
-					printf(
-						/* translators: %s: amount saved, already formatted as a price */
-						esc_html( Xpo::get_fbnd_settings_item( 'savingsText', __( 'You save %s', 'fast-bundle' ) ) ),
-						wp_kses_post( wc_price( $totals['savings'] ) )
-					);
-					?>
-				</span>
+				<div class="fbnd-fixed-bundle__summary-row">
+					<span class="fbnd-fixed-bundle__summary-label"><?php esc_html_e( 'Bundle Price:', 'fast-bundle' ); ?></span>
+					<span class="fbnd-fixed-bundle__savings-percent" <?php echo $has_saving ? '' : 'hidden'; ?>>
+						<?php
+						printf(
+							/* translators: %s: savings percentage, rounded to a whole number */
+							esc_html__( 'Instant %s%% Savings', 'fast-bundle' ),
+							esc_html( round( $savings_percent ) )
+						);
+						?>
+					</span>
+				</div>
+				<div class="fbnd-fixed-bundle__price-row">
+					<span class="fbnd-fixed-bundle__discounted"><?php echo wp_kses_post( wc_price( $totals['discounted_total'] ) ); ?></span>
+					<span class="fbnd-fixed-bundle__original" <?php echo $has_saving ? '' : 'hidden'; ?>>
+						<?php echo wp_kses_post( wc_price( $totals['original_total'] ) ); ?>
+					</span>
+				</div>
 			</div>
 
 			<?php if ( 'free_shipping' === $data['discount']['type'] ) : ?>
@@ -165,6 +225,9 @@ class Fixed_Bundle_Cart {
 			<button type="button" class="fbnd-fixed-bundle__button button alt" data-bundle-id="<?php echo esc_attr( $bundle_id ); ?>">
 				<?php echo esc_html( $data['display']['buttonText'] ); ?>
 			</button>
+			<p class="fbnd-fixed-bundle__microcopy">
+				<?php esc_html_e( '1-Click purchase • Native WooCommerce cart session', 'fast-bundle' ); ?>
+			</p>
 
 			<div class="fbnd-fixed-bundle__message" role="status" aria-live="polite"></div>
 		</div>

@@ -50,6 +50,54 @@ class Buy_X_Get_Y_Cart {
 	}
 
 	/**
+	 * Maps the deal's reward discount to the three phrases the widget's
+	 * headline ("Buy 2 Get 1 AT 50% OFF"), corner badge ("50% OFF GIFT"),
+	 * and subtitle ("...at 50% off!") build from — one source of truth so
+	 * all three always agree with the deal's actual configured discount.
+	 *
+	 * @param array $discount `{ type, value }`.
+	 * @return array { badge, headline, subtitle } phrase fragments.
+	 */
+	private function get_reward_phrases( $discount ) {
+		$type  = isset( $discount['type'] ) ? $discount['type'] : 'free';
+		$value = isset( $discount['value'] ) ? (float) $discount['value'] : 0;
+
+		if ( 'fixed_price' === $type ) {
+			$price = wp_strip_all_tags( wc_price( $value ) );
+			return array(
+				/* translators: %s: fixed reward price, already formatted */
+				'badge'    => sprintf( __( '%s GIFT', 'fast-bundle' ), $price ),
+				/* translators: %s: fixed reward price, already formatted */
+				'headline' => sprintf( __( 'AT %s', 'fast-bundle' ), $price ),
+				/* translators: %s: fixed reward price, already formatted */
+				'subtitle' => sprintf( __( 'for %s', 'fast-bundle' ), $price ),
+				'short'    => $price,
+			);
+		}
+
+		if ( 'percentage' === $type ) {
+			$percent = (string) round( $value );
+			return array(
+				/* translators: %s: discount percentage, rounded */
+				'badge'    => sprintf( __( '%s%% OFF GIFT', 'fast-bundle' ), $percent ),
+				/* translators: %s: discount percentage, rounded */
+				'headline' => sprintf( __( 'AT %s%% OFF', 'fast-bundle' ), $percent ),
+				/* translators: %s: discount percentage, rounded */
+				'subtitle' => sprintf( __( 'at %s%% off', 'fast-bundle' ), $percent ),
+				/* translators: %s: discount percentage, rounded */
+				'short'    => sprintf( __( '-%s%%', 'fast-bundle' ), $percent ),
+			);
+		}
+
+		return array(
+			'badge'    => __( 'FREE GIFT', 'fast-bundle' ),
+			'headline' => __( 'FREE', 'fast-bundle' ),
+			'subtitle' => __( 'free', 'fast-bundle' ),
+			'short'    => __( 'FREE', 'fast-bundle' ),
+		);
+	}
+
+	/**
 	 * Renders the Buy X Get Y widget below the Add to Cart form of the
 	 * current single product, when a published deal is assigned to it.
 	 *
@@ -90,6 +138,8 @@ class Buy_X_Get_Y_Cart {
 					/* translators: %s: a `%s` placeholder the JS substitutes with a formatted price. */
 					'youSave'       => Xpo::get_fbnd_settings_item( 'savingsText', __( 'You save %s', 'fast-bundle' ) ),
 					'free'          => Xpo::get_fbnd_settings_item( 'freeRewardText', __( 'FREE', 'fast-bundle' ) ),
+					/* translators: %s: a `%s` placeholder the JS substitutes with a formatted price. */
+					'saved'         => __( 'Saved %s', 'fast-bundle' ),
 				),
 			)
 		);
@@ -97,6 +147,65 @@ class Buy_X_Get_Y_Cart {
 		$pricing           = $data['pricing'];
 		$has_saving        = $pricing['savings'] > 0;
 		$show_savings_text = $has_saving && Xpo::get_fbnd_settings_item( 'enableSavingsText', true );
+		$original_total    = $pricing['total'] + $pricing['savings'];
+
+		$trigger_qty = array_sum( wp_list_pluck( $data['triggers'], 'quantity' ) );
+		$reward_qty  = array_sum( wp_list_pluck( $data['rewards'], 'quantity' ) );
+		$phrases     = $this->get_reward_phrases( $data['rewardDiscount'] );
+
+		$headline = sprintf(
+			/* translators: 1: trigger quantity 2: reward quantity 3: discount phrase, e.g. "AT 50% OFF" */
+			__( 'Buy %1$d Get %2$d %3$s', 'fast-bundle' ),
+			$trigger_qty,
+			$reward_qty,
+			$phrases['headline']
+		);
+
+		$trigger_label = 1 === count( $data['triggers'] )
+			? $data['triggers'][0]['name']
+			: sprintf(
+				/* translators: %d: number of trigger items */
+				_n( '%d item', '%d items', $trigger_qty, 'fast-bundle' ),
+				$trigger_qty
+			);
+		$reward_label  = 1 === count( $data['rewards'] )
+			? $data['rewards'][0]['name']
+			: sprintf(
+				/* translators: %d: number of reward items */
+				_n( '%d item', '%d items', $reward_qty, 'fast-bundle' ),
+				$reward_qty
+			);
+
+		$subtitle = sprintf(
+			/* translators: 1: what to buy 2: what you get 3: discount phrase, e.g. "at 50% off" */
+			__( 'Add %1$s and get %2$s %3$s!', 'fast-bundle' ),
+			$trigger_label,
+			$reward_label,
+			$phrases['subtitle']
+		);
+
+		// Every trigger gets its own numbered step (a picker for a variable
+		// one, a plain line for a simple one); the reward group is always
+		// the final step. Only shown as "1.", "2." etc. once there's an
+		// actual sequence — a single-step deal (no trigger picker needed)
+		// doesn't need a number.
+		$steps = array();
+		foreach ( $data['triggers'] as $item ) {
+			$steps[] = array(
+				'type' => 'trigger',
+				'item' => $item,
+			);
+		}
+		$steps[]      = array( 'type' => 'rewards' );
+		$show_numbers = count( $steps ) > 1;
+
+		$reward_discounted_total = 0.0;
+		$reward_original_total   = 0.0;
+		foreach ( $data['rewards'] as $item ) {
+			$reward_unit_price         = $pricing['reward_per_item'][ $item['product_id'] ] ?? $item['price'];
+			$reward_discounted_total  += $reward_unit_price * $item['quantity'];
+			$reward_original_total    += $item['price'] * $item['quantity'];
+		}
 
 		// Lets the storefront JS recompute totals live as a shopper resolves
 		// variable items, reusing the same trigger-full-price /
@@ -124,74 +233,162 @@ class Buy_X_Get_Y_Cart {
 			data-deal-id="<?php echo esc_attr( $deal_id ); ?>"
 			data-pricing="<?php echo esc_attr( wp_json_encode( $pricing_data ) ); ?>"
 		>
-			<h3 class="fbnd-bxgy__title"><?php echo esc_html( $data['title'] ); ?></h3>
+			<span class="fbnd-bxgy__ribbon"><?php echo esc_html( $phrases['badge'] ); ?></span>
+
+			<div class="fbnd-bxgy__header">
+				<span class="fbnd-bxgy__icon" aria-hidden="true">🔥</span>
+				<div class="fbnd-bxgy__heading">
+					<h3 class="fbnd-bxgy__title"><?php echo esc_html( $headline ); ?></h3>
+					<p class="fbnd-bxgy__savings" <?php echo $show_savings_text ? '' : 'hidden'; ?>>
+						<?php echo esc_html( $subtitle ); ?>
+					</p>
+				</div>
+			</div>
+
 			<?php if ( ! empty( $data['display']['description'] ) ) : ?>
 				<div class="fbnd-bxgy__desc"><?php echo wp_kses_post( $data['display']['description'] ); ?></div>
 			<?php endif; ?>
 
-			<div class="fbnd-bxgy__group">
-				<span class="fbnd-bxgy__group-label"><?php echo esc_html( Xpo::get_fbnd_settings_item( 'buyGroupLabelText', __( 'Buy', 'fast-bundle' ) ) ); ?></span>
-				<ul class="fbnd-bxgy__items">
-					<?php foreach ( $data['triggers'] as $item ) : ?>
-						<li class="fbnd-bxgy__item">
-							<img class="fbnd-bxgy__item-image" src="<?php echo esc_url( $item['image'] ); ?>" alt="<?php echo esc_attr( $item['name'] ); ?>" />
-							<span class="fbnd-bxgy__item-name">
-								<?php echo esc_html( $item['name'] ); ?>
-								<?php if ( $item['quantity'] > 1 ) : ?>
-									<span class="fbnd-bxgy__item-qty">&times;&nbsp;<?php echo esc_html( $item['quantity'] ); ?></span>
-								<?php endif; ?>
+			<div class="fbnd-bxgy__strip">
+				<?php $all_items = array_merge( $data['triggers'], $data['rewards'] ); ?>
+				<?php foreach ( $all_items as $index => $item ) : ?>
+					<?php if ( $index > 0 ) : ?>
+						<span class="fbnd-bxgy__strip-plus" aria-hidden="true">+</span>
+					<?php endif; ?>
+					<span class="fbnd-bxgy__strip-item">
+						<img src="<?php echo esc_url( $item['image'] ); ?>" alt="<?php echo esc_attr( $item['name'] ); ?>" />
+						<?php if ( $item['quantity'] > 1 ) : ?>
+							<span class="fbnd-bxgy__strip-qty"><?php echo esc_html( $item['quantity'] ); ?>&times;</span>
+						<?php endif; ?>
+						<?php if ( $index >= count( $data['triggers'] ) ) : ?>
+							<span class="fbnd-bxgy__strip-reward">
+								<?php
+								printf(
+									/* translators: %s: discount phrase, e.g. "-50%" or "FREE" */
+									esc_html__( 'Reward (%s)', 'fast-bundle' ),
+									esc_html( $phrases['short'] )
+								);
+								?>
 							</span>
-							<?php $this->grouped_cart->render_variation_picker( $item, $data['display']['variantSelectorType'] ); ?>
-						</li>
-					<?php endforeach; ?>
-				</ul>
+						<?php endif; ?>
+					</span>
+				<?php endforeach; ?>
 			</div>
 
-			<div class="fbnd-bxgy__group">
-				<span class="fbnd-bxgy__group-label"><?php echo esc_html( Xpo::get_fbnd_settings_item( 'getGroupLabelText', __( 'Get', 'fast-bundle' ) ) ); ?></span>
-				<ul class="fbnd-bxgy__items">
-					<?php foreach ( $data['rewards'] as $item ) : ?>
-						<?php $reward_price = $pricing['reward_per_item'][ $item['product_id'] ] ?? $item['price']; ?>
-						<li class="fbnd-bxgy__item">
-							<img class="fbnd-bxgy__item-image" src="<?php echo esc_url( $item['image'] ); ?>" alt="<?php echo esc_attr( $item['name'] ); ?>" />
-							<span class="fbnd-bxgy__item-name">
-								<?php echo esc_html( $item['name'] ); ?>
+			<?php foreach ( $steps as $step_index => $step ) : ?>
+				<?php $step_number = $show_numbers ? ( $step_index + 1 ) : null; ?>
+				<?php if ( 'trigger' === $step['type'] ) : ?>
+					<?php $item = $step['item']; ?>
+					<?php
+					if ( ! empty( $item['is_variable'] ) && ! empty( $item['attributes'] ) ) {
+						$select_label = sprintf(
+							/* translators: %s: joined attribute labels, e.g. "Size & Color" */
+							__( 'Select %s', 'fast-bundle' ),
+							implode( ' & ', wp_list_pluck( $item['attributes'], 'label' ) )
+						);
+					} else {
+						$select_label = $item['name'];
+					}
+					?>
+					<div class="fbnd-bxgy__step">
+						<div class="fbnd-bxgy__step-row">
+							<span class="fbnd-bxgy__step-label">
+								<?php if ( $step_number ) : ?>
+									<?php echo esc_html( $step_number ); ?>.
+								<?php endif; ?>
+								<?php echo esc_html( $select_label ); ?>
 								<?php if ( $item['quantity'] > 1 ) : ?>
-									<span class="fbnd-bxgy__item-qty">&times;&nbsp;<?php echo esc_html( $item['quantity'] ); ?></span>
+									<?php
+									printf(
+										/* translators: %d: quantity of this trigger item required */
+										esc_html__( ' (Qty: %d)', 'fast-bundle' ),
+										esc_html( $item['quantity'] )
+									);
+									?>
 								<?php endif; ?>
 							</span>
 							<span class="fbnd-bxgy__item-price" data-product-id="<?php echo esc_attr( $item['product_id'] ); ?>">
-								<?php if ( $reward_price < $item['price'] ) : ?>
-									<span class="fbnd-bxgy__item-price-original"><?php echo wp_kses_post( wc_price( $item['price'] ) ); ?></span>
+								<?php echo wp_kses_post( wc_price( $item['price'] * $item['quantity'] ) ); ?>
+							</span>
+						</div>
+						<?php $this->grouped_cart->render_variation_picker( $item, $data['display']['variantSelectorType'] ); ?>
+					</div>
+				<?php else : ?>
+					<div class="fbnd-bxgy__step fbnd-bxgy__step--reward">
+						<div class="fbnd-bxgy__step-row">
+							<span class="fbnd-bxgy__step-label">
+								<?php if ( $step_number ) : ?>
+									<?php echo esc_html( $step_number ); ?>.
 								<?php endif; ?>
-								<?php if ( 0.0 === (float) $reward_price ) : ?>
-									<span class="fbnd-bxgy__item-price-free"><?php echo esc_html( Xpo::get_fbnd_settings_item( 'freeRewardText', __( 'FREE', 'fast-bundle' ) ) ); ?></span>
-								<?php else : ?>
-									<?php echo wp_kses_post( wc_price( $reward_price ) ); ?>
+								<?php echo esc_html( _n( 'Your Reward', 'Your Rewards', count( $data['rewards'] ), 'fast-bundle' ) ); ?>
+							</span>
+							<span class="fbnd-bxgy__reward-total">
+								<?php echo wp_kses_post( wc_price( $reward_discounted_total ) ); ?>
+								<?php if ( $reward_discounted_total < $reward_original_total ) : ?>
+									<span class="fbnd-bxgy__reward-total-original"><?php echo wp_kses_post( wc_price( $reward_original_total ) ); ?></span>
 								<?php endif; ?>
 							</span>
-							<?php $this->grouped_cart->render_variation_picker( $item, $data['display']['variantSelectorType'] ); ?>
-						</li>
-					<?php endforeach; ?>
-				</ul>
-			</div>
+						</div>
+						<ul class="fbnd-bxgy__items">
+							<?php foreach ( $data['rewards'] as $item ) : ?>
+								<?php $reward_price = $pricing['reward_per_item'][ $item['product_id'] ] ?? $item['price']; ?>
+								<li class="fbnd-bxgy__item">
+									<span class="fbnd-bxgy__item-check" aria-hidden="true">✓</span>
+									<div class="fbnd-bxgy__item-main">
+										<div class="fbnd-bxgy__item-row">
+											<span class="fbnd-bxgy__item-name">
+												<?php echo esc_html( $item['name'] ); ?>
+												<?php if ( $item['quantity'] > 1 ) : ?>
+													<span class="fbnd-bxgy__item-qty">(<?php echo esc_html( $item['quantity'] ); ?>&times;)</span>
+												<?php endif; ?>
+											</span>
+											<span class="fbnd-bxgy__item-price" data-product-id="<?php echo esc_attr( $item['product_id'] ); ?>">
+												<?php if ( $reward_price < $item['price'] ) : ?>
+													<span class="fbnd-bxgy__item-price-original"><?php echo wp_kses_post( wc_price( $item['price'] * $item['quantity'] ) ); ?></span>
+												<?php endif; ?>
+												<?php if ( 0.0 === (float) $reward_price ) : ?>
+													<span class="fbnd-bxgy__item-price-free"><?php echo esc_html( Xpo::get_fbnd_settings_item( 'freeRewardText', __( 'FREE', 'fast-bundle' ) ) ); ?></span>
+												<?php else : ?>
+													<?php echo wp_kses_post( wc_price( $reward_price * $item['quantity'] ) ); ?>
+												<?php endif; ?>
+											</span>
+										</div>
+										<?php $this->grouped_cart->render_variation_picker( $item, $data['display']['variantSelectorType'] ); ?>
+									</div>
+								</li>
+							<?php endforeach; ?>
+						</ul>
+					</div>
+				<?php endif; ?>
+			<?php endforeach; ?>
 
 			<div class="fbnd-bxgy__summary">
-				<span class="fbnd-bxgy__total"><?php echo wp_kses_post( wc_price( $pricing['total'] ) ); ?></span>
-				<span class="fbnd-bxgy__savings" <?php echo $show_savings_text ? '' : 'hidden'; ?>>
-					<?php
-					printf(
-						/* translators: %s: amount saved, already formatted as a price */
-						esc_html( Xpo::get_fbnd_settings_item( 'savingsText', __( 'You save %s', 'fast-bundle' ) ) ),
-						wp_kses_post( wc_price( $pricing['savings'] ) )
-					);
-					?>
-				</span>
+				<div class="fbnd-bxgy__summary-row">
+					<span class="fbnd-bxgy__summary-label"><?php esc_html_e( 'Total Deal Price:', 'fast-bundle' ); ?></span>
+					<span class="fbnd-bxgy__saved-badge" <?php echo $has_saving ? '' : 'hidden'; ?>>
+						<?php
+						printf(
+							/* translators: %s: amount saved, already formatted as a price */
+							esc_html__( 'Saved %s', 'fast-bundle' ),
+							wp_kses_post( wc_price( $pricing['savings'] ) )
+						);
+						?>
+					</span>
+				</div>
+				<div class="fbnd-bxgy__price-row">
+					<span class="fbnd-bxgy__total"><?php echo wp_kses_post( wc_price( $pricing['total'] ) ); ?></span>
+					<span class="fbnd-bxgy__original" <?php echo $has_saving ? '' : 'hidden'; ?>>
+						<?php echo wp_kses_post( wc_price( $original_total ) ); ?>
+					</span>
+				</div>
 			</div>
 
 			<button type="button" class="fbnd-bxgy__button button alt" data-deal-id="<?php echo esc_attr( $deal_id ); ?>">
 				<?php echo esc_html( $data['display']['buttonText'] ); ?>
 			</button>
+			<p class="fbnd-bxgy__microcopy">
+				<?php esc_html_e( 'Instant cart bundle rule applied • WooCommerce native checkout', 'fast-bundle' ); ?>
+			</p>
 
 			<div class="fbnd-bxgy__message" role="status" aria-live="polite"></div>
 		</div>

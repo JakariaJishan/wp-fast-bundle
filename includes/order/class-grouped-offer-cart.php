@@ -123,6 +123,19 @@ class Grouped_Offer_Cart {
 		if ( empty( $item['is_variable'] ) ) {
 			return;
 		}
+
+		// Pre-select the cheapest variation by default — the same one the
+		// item's own displayed/estimated price (`min($prices)` in
+		// `Fixed_Bundle::get_items()`/`Buy_X_Get_Y::hydrate_items()`) already
+		// assumes, so the widget's first paint and this default selection
+		// always agree, no client-side recalculation needed on load.
+		$default_variation = null;
+		foreach ( $item['variations'] as $variation ) {
+			if ( null === $default_variation || $variation['price'] < $default_variation['price'] ) {
+				$default_variation = $variation;
+			}
+		}
+		$default_attributes = $default_variation ? $default_variation['attributes'] : array();
 		?>
 		<div
 			class="fbnd-variation-picker fbnd-variation-picker--<?php echo esc_attr( $selector_type ); ?>"
@@ -130,12 +143,18 @@ class Grouped_Offer_Cart {
 			data-variations="<?php echo esc_attr( wp_json_encode( $item['variations'] ) ); ?>"
 		>
 			<?php foreach ( $item['attributes'] as $attribute_key => $attribute ) : ?>
+				<?php $default_value = isset( $default_attributes[ $attribute_key ] ) ? $default_attributes[ $attribute_key ] : ''; ?>
 				<div class="fbnd-variation-picker__attribute" data-attribute="<?php echo esc_attr( $attribute_key ); ?>">
 					<span class="fbnd-variation-picker__attribute-label"><?php echo esc_html( $attribute['label'] ); ?></span>
 					<?php if ( 'swatches' === $selector_type ) : ?>
 						<div class="fbnd-variation-picker__swatches">
 							<?php foreach ( $attribute['options'] as $option ) : ?>
-								<button type="button" class="fbnd-variation-picker__swatch" data-value="<?php echo esc_attr( $option['value'] ); ?>">
+								<?php $is_selected = '' !== $default_value && $option['value'] === $default_value; ?>
+								<button
+									type="button"
+									class="fbnd-variation-picker__swatch<?php echo $is_selected ? ' fbnd-variation-picker__swatch--selected' : ''; ?>"
+									data-value="<?php echo esc_attr( $option['value'] ); ?>"
+								>
 									<?php echo esc_html( $option['label'] ); ?>
 								</button>
 							<?php endforeach; ?>
@@ -144,13 +163,15 @@ class Grouped_Offer_Cart {
 						<select class="fbnd-variation-picker__select">
 							<option value=""><?php esc_html_e( 'Choose an option', 'fast-bundle' ); ?></option>
 							<?php foreach ( $attribute['options'] as $option ) : ?>
-								<option value="<?php echo esc_attr( $option['value'] ); ?>"><?php echo esc_html( $option['label'] ); ?></option>
+								<option value="<?php echo esc_attr( $option['value'] ); ?>" <?php selected( $option['value'], $default_value ); ?>>
+									<?php echo esc_html( $option['label'] ); ?>
+								</option>
 							<?php endforeach; ?>
 						</select>
 					<?php endif; ?>
 				</div>
 			<?php endforeach; ?>
-			<input type="hidden" class="fbnd-variation-picker__variation-id" value="" />
+			<input type="hidden" class="fbnd-variation-picker__variation-id" value="<?php echo esc_attr( $default_variation ? $default_variation['variation_id'] : '' ); ?>" />
 			<p class="fbnd-variation-picker__unavailable" hidden><?php esc_html_e( 'This combination is unavailable.', 'fast-bundle' ); ?></p>
 		</div>
 		<?php

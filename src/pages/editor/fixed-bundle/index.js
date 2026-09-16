@@ -253,38 +253,37 @@ const FixedBundleEditor = ( { optionId, setOptionId, setIsListing } ) => {
 					items={ items }
 					discount={ discount }
 					display={ display }
+					status={ status }
 				/>
 			}
 		>
 			<Card className="fbnd-card-panel">
 				<CardBody>
-					<VStack spacing={ 3 }>
-						<Heading level={ 4 }>
-							{ __( 'Products in this bundle', 'fast-bundle' ) }
-						</Heading>
-						<ProductPicker items={ items } onChange={ setItems } />
-					</VStack>
+					<ProductPicker
+						items={ items }
+						onChange={ setItems }
+						title={ __( 'Products in this Bundle', 'fast-bundle' ) }
+						description={ __(
+							'Search and add items to sell together. The bundle price and inventory will automatically recalculate.',
+							'fast-bundle'
+						) }
+						label={ __( 'Add products to this bundle', 'fast-bundle' ) }
+					/>
 				</CardBody>
 			</Card>
 
 			<Card className="fbnd-card-panel">
 				<CardBody>
-					<VStack spacing={ 3 }>
-						<Heading level={ 4 }>{ __( 'Assign', 'fast-bundle' ) }</Heading>
-						<AssignPanel />
-					</VStack>
+					<AssignPanel />
 				</CardBody>
 			</Card>
 			<Card className="fbnd-card-panel">
 				<CardBody>
-					<VStack spacing={ 3 }>
-						<Heading level={ 4 }>{ __( 'Pricing', 'fast-bundle' ) }</Heading>
-						<DiscountSettings
-							items={ items }
-							discount={ discount }
-							onChange={ setDiscount }
-						/>
-					</VStack>
+					<DiscountSettings
+						items={ items }
+						discount={ discount }
+						onChange={ setDiscount }
+					/>
 				</CardBody>
 			</Card>
 

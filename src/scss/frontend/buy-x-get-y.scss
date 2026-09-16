@@ -4,50 +4,168 @@
  * Uses the plugin's `--fbnd-*` design tokens where available, with literal
  * fallbacks so the widget still looks right even if `frontend.scss`'s own
  * `:root` block (which defines those tokens) loads after this partial.
+ * `--fbnd-color-accent` is this widget's own highlight color (border/ribbon)
+ * — see `fixed-bundle.scss` for why it's a separate token from the rest.
  */
 
 .fbnd-bxgy {
 	box-sizing: border-box;
+	position: relative;
 	max-width: 480px;
 	margin: 24px 0;
 	padding: 20px;
-	border: 1px solid var(--fbnd-color-border-primary, #d5dad4);
-	border-radius: var(--fbnd-border-radius-md, 4px);
+	border: 2px solid var(--fbnd-color-accent, #7f54b3);
+	border-radius: var(--fbnd-border-radius-md, 8px);
 	background: var(--fbnd-color-base-one, #fff);
 
 	* {
 		box-sizing: border-box;
 	}
 
+	&__ribbon {
+		position: absolute;
+		top: -2px;
+		right: -2px;
+		padding: 4px 10px;
+		font-size: 11px;
+		font-weight: var(--fbnd-font-weight-bold, 700);
+		color: #fff;
+		background: var(--fbnd-color-accent, #7f54b3);
+		border-radius: 0 8px 0 8px;
+	}
+
+	&__header {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		margin-bottom: 4px;
+	}
+
+	&__icon {
+		flex-shrink: 0;
+		font-size: 18px;
+		line-height: 1.3;
+	}
+
+	&__heading {
+		flex: 1;
+		min-width: 0;
+	}
+
 	&__title {
-		margin: 0 0 8px;
+		margin: 0;
 		font-size: 16px;
 		font-weight: var(--fbnd-font-weight-bold, 600);
 		color: var(--fbnd-color-text-dark, #0b0e04);
 	}
 
 	&__desc {
-		margin: 0 0 12px;
+		margin: 8px 0 0;
 		font-size: 13px;
 		color: var(--fbnd-color-text-body, #7c807c);
 	}
 
-	&__group {
-		margin-bottom: 14px;
+	&__strip {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin: 14px 0;
+		padding: 10px;
+		border-radius: var(--fbnd-border-radius-sm, 6px);
+		background: var(--fbnd-color-base-two, #f6f7f7);
+	}
 
-		&:last-of-type {
-			margin-bottom: 16px;
+	&__strip-plus {
+		color: var(--fbnd-color-text-body, #7c807c);
+		font-weight: var(--fbnd-font-weight-semi, 500);
+	}
+
+	&__strip-item {
+		position: relative;
+		display: inline-flex;
+
+		img {
+			width: 44px;
+			height: 44px;
+			object-fit: cover;
+			border-radius: var(--fbnd-border-radius-sm, 4px);
+			border: 1px solid var(--fbnd-color-border-light, #e2e9e2);
 		}
 	}
 
-	&__group-label {
-		display: block;
-		margin-bottom: 6px;
+	&__strip-qty {
+		position: absolute;
+		top: -6px;
+		right: -6px;
+		min-width: 16px;
+		padding: 1px 4px;
+		font-size: 10px;
+		font-weight: var(--fbnd-font-weight-bold, 700);
+		line-height: 1.4;
+		text-align: center;
+		color: #fff;
+		background: var(--fbnd-color-text-dark, #1e1e1e);
+		border-radius: 100px;
+	}
+
+	&__strip-reward {
 		font-size: 11px;
+		font-weight: var(--fbnd-font-weight-bold, 700);
+		color: var(--fbnd-color-accent, #7f54b3);
+	}
+
+	&__step {
+		margin-bottom: 12px;
+		padding: 12px;
+		border: 1px solid var(--fbnd-color-border-light, #e2e9e2);
+		border-radius: var(--fbnd-border-radius-sm, 6px);
+		background: var(--fbnd-color-base-two, #f6f7f7);
+
+		&--reward {
+			border: 2px solid var(--fbnd-color-accent, #7f54b3);
+			background: var(--fbnd-color-accent-tint, #f5effb);
+		}
+	}
+
+	&__step-row {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 10px;
+	}
+
+	&__step-label {
+		font-size: 13px;
 		font-weight: var(--fbnd-font-weight-bold, 600);
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		color: var(--fbnd-color-primary, #86a62c);
+		color: var(--fbnd-color-text-dark, #0b0e04);
+	}
+
+	&__step--reward &__step-label {
+		color: var(--fbnd-color-accent, #7f54b3);
+	}
+
+	&__reward-total {
+		flex-shrink: 0;
+		font-size: 14px;
+		font-weight: var(--fbnd-font-weight-bold, 700);
+		color: var(--fbnd-color-accent, #7f54b3);
+		white-space: nowrap;
+	}
+
+	&__reward-total-original {
+		margin-left: 4px;
+		text-decoration: line-through;
+		color: var(--fbnd-color-text-body, #7c807c);
+		font-weight: var(--fbnd-font-weight-regular, 400);
+	}
+
+	&__step .fbnd-variation-picker {
+		margin-top: 8px;
+	}
+
+	&__step &__items {
+		margin-top: 8px;
 	}
 
 	&__items {
@@ -56,32 +174,48 @@
 		padding: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 10px;
 	}
 
 	&__item {
 		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 10px;
+		align-items: flex-start;
+		gap: 8px;
+		padding: 10px 0;
+		border-bottom: 1px solid var(--fbnd-color-border-light, #f0f0f0);
 
-		.fbnd-variation-picker {
-			flex-basis: 100%;
-			margin-left: 50px; // aligns under the name, past the item image
+		&:last-child {
+			border-bottom: none;
+			padding-bottom: 0;
 		}
 	}
 
-	&__item-image {
-		width: 40px;
-		height: 40px;
-		object-fit: cover;
-		border-radius: var(--fbnd-border-radius-sm, 2px);
-		border: 1px solid var(--fbnd-color-border-light, #e2e9e2);
+	&__item-check {
 		flex-shrink: 0;
+		width: 16px;
+		height: 16px;
+		margin-top: 2px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 10px;
+		color: #fff;
+		background: var(--fbnd-color-text-dark, #1e1e1e);
+		border-radius: 3px;
+	}
+
+	&__item-main {
+		flex: 1;
+		min-width: 0;
+	}
+
+	&__item-row {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 10px;
 	}
 
 	&__item-name {
-		flex: 1;
 		font-size: 14px;
 		color: var(--fbnd-color-text-medium, #3a3e39);
 	}
@@ -91,8 +225,9 @@
 	}
 
 	&__item-price {
-		font-size: 13px;
-		font-weight: var(--fbnd-font-weight-semi, 500);
+		flex-shrink: 0;
+		font-size: 14px;
+		font-weight: var(--fbnd-font-weight-semi, 600);
 		color: var(--fbnd-color-text-dark, #0b0e04);
 		white-space: nowrap;
 	}
@@ -109,31 +244,97 @@
 		font-weight: var(--fbnd-font-weight-bold, 600);
 	}
 
+	.fbnd-variation-picker {
+		margin-top: 6px;
+	}
+
 	&__summary {
+		margin-bottom: 12px;
+	}
+
+	&__summary-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		margin-bottom: 6px;
+	}
+
+	&__summary-label {
+		font-size: 13px;
+		color: var(--fbnd-color-text-body, #7c807c);
+	}
+
+	&__price-row {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: 8px;
-		margin-bottom: 12px;
+	}
+
+	&__original {
+		text-decoration: line-through;
+		color: var(--fbnd-color-text-body, #7c807c);
+		font-size: 14px;
 	}
 
 	&__total {
-		font-size: 18px;
-		font-weight: var(--fbnd-font-weight-bold, 600);
+		font-size: 20px;
+		font-weight: var(--fbnd-font-weight-bold, 700);
 		color: var(--fbnd-color-text-dark, #0b0e04);
 	}
 
 	&__savings {
-		font-size: 12px;
+		display: block;
+		margin-top: 2px;
+		font-size: 13px;
 		font-weight: var(--fbnd-font-weight-semi, 500);
 		color: var(--fbnd-color-primary, #86a62c);
+	}
+
+	&__saved-badge {
+		font-size: 12px;
+		font-weight: var(--fbnd-font-weight-semi, 600);
+		color: var(--fbnd-color-primary, #86a62c);
 		background: var(--fbnd-color-medium, #e8f1d0);
-		border-radius: var(--fbnd-border-radius-sm, 2px);
-		padding: 2px 8px;
+		border-radius: 100px;
+		padding: 3px 10px;
+		white-space: nowrap;
 	}
 
 	&__button {
 		width: 100%;
+		background: var(--fbnd-color-accent, #7f54b3);
+		border-color: var(--fbnd-color-accent, #7f54b3);
+		color: #fff;
+
+		&:hover,
+		&:focus {
+			background: #6d4699;
+			border-color: #6d4699;
+			color: #fff;
+		}
+
+		// A `::before` icon survives the JS "Adding…" state swap
+		// (`button.textContent = …`), which only ever touches text nodes.
+		&::before {
+			content: '';
+			display: inline-block;
+			width: 15px;
+			height: 15px;
+			margin-right: 6px;
+			vertical-align: -2px;
+			background-color: currentColor;
+			-webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 6h15l-1.5 9h-12z'/><circle cx='9' cy='20' r='1.5'/><circle cx='18' cy='20' r='1.5'/><path d='M6 6 5 3H2'/></svg>") center / contain no-repeat;
+			mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 6h15l-1.5 9h-12z'/><circle cx='9' cy='20' r='1.5'/><circle cx='18' cy='20' r='1.5'/><path d='M6 6 5 3H2'/></svg>") center / contain no-repeat;
+		}
+	}
+
+	&__microcopy {
+		margin: 8px 0 0;
+		font-size: 11px;
+		text-align: center;
+		color: var(--fbnd-color-text-body, #7c807c);
 	}
 
 	&__message {
